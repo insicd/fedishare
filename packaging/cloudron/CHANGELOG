@@ -1,0 +1,3 @@
+[0.6.0]
+* Initial Cloudron package for fedishare-gateway
+* HTTP/1.1 Upgrade tunnel, challenge-response auth, cached Actor/WebFinger when the node is offline

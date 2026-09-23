@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{.CSRF}}">
+  <title>Set up {{.Title}}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="wizard-body">
+  <main class="wizard">
+    <p class="eyebrow">Welcome</p>
+    <h1>Set up FediShare</h1>
+    <p class="lede">Choose a name and a folder. Files stay on this computer. FediShare only publishes metadata.</p>
+    <form id="wizard-form">
+      <label>
+        Display name
+        <input name="display_name" required maxlength="80" placeholder="Alice" autocomplete="nickname">
+      </label>
+      <label>
+        Username
+        <input name="username" required maxlength="30" pattern="[A-Za-z0-9_]+" placeholder="alice" autocomplete="username">
+        <span class="hint">Letters, numbers, underscore. This becomes your Fediverse name.</span>
+      </label>
+      <label>
+        Shared folder
+        <input name="share_directory" required placeholder="{{.SuggestedShare}}" value="{{.SuggestedShare}}">
+        <span class="hint">Only this folder will be visible. It is not your settings folder.</span>
+      </label>
+      <label>
+        Gateway URL <span class="optional">optional</span>
+        <input name="gateway_url" type="url" placeholder="https://nodes.example.org">
+        <span class="hint">A rendezvous server for people behind NAT. You can add this later.</span>
+      </label>
+      <label>
+        Short bio <span class="optional">optional</span>
+        <textarea name="summary" maxlength="500" rows="3" placeholder="Files I am happy to share."></textarea>
+      </label>
+      <p id="wizard-error" class="error" hidden></p>
+      <button type="submit">Start FediShare</button>
+    </form>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

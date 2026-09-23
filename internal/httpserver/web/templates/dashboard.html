@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{.CSRF}}">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <p class="brand">FediShare</p>
+      <nav>
+        <a href="#status" class="active">Status</a>
+        <a href="#files">Shared files</a>
+        <a href="#activity">Activity</a>
+        <a href="#followers">Followers</a>
+        <a href="#settings">Settings</a>
+        <a href="#about">Logs / About</a>
+      </nav>
+    </aside>
+    <main>
+      <section id="status">
+        <h1>FediShare</h1>
+        <dl class="stats">
+          <div><dt>Status</dt><dd data-field="state-label">{{.Status.State.Label}}</dd></div>
+          <div><dt>Fediverse identity</dt><dd data-field="identity">{{if .Status.Identity}}{{.Status.Identity}}{{else}}—{{end}}</dd></div>
+          <div><dt>Shared directory</dt><dd data-field="share">{{if .Config.ShareDirectory}}{{.Config.ShareDirectory}}{{else}}—{{end}}</dd></div>
+          <div><dt>Shared files</dt><dd data-field="files">{{.Status.IndexedFiles}}</dd></div>
+          <div><dt>Total shared size</dt><dd data-field="bytes">{{bytes .Status.TotalBytes}}</dd></div>
+          <div><dt>Gateway</dt><dd data-field="gateway">{{if .Status.GatewayConnected}}Connected{{else if eq .Status.State.String "connecting"}}Connecting{{else}}Disconnected{{end}}</dd></div>
+          <div><dt>ActivityPub</dt><dd data-field="ap">{{if .Status.ActivityPubActive}}Active{{else}}Inactive{{end}}</dd></div>
+        </dl>
+        <p class="message" data-field="message">{{.Status.Message}}</p>
+        <div class="actions">
+          <button type="button" data-action="rescan">Rescan files</button>
+          <button type="button" data-action="pause">Pause sharing</button>
+          <button type="button" data-action="resume" hidden>Resume sharing</button>
+          <button type="button" class="secondary" data-action="copy-address">Copy Fediverse address</button>
+        </div>
+      </section>
+
+      <section id="files">
+        <h2>Shared files</h2>
+        <p class="hint">These files stay on this computer. Downloads use an opaque id, never a filesystem path.</p>
+        <table>
+          <thead><tr><th>Name</th><th>Path</th><th>Size</th><th>Hash</th><th></th></tr></thead>
+          <tbody data-file-list>
+            <tr><td colspan="5">Loading…</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="activity">
+        <h2>Activity</h2>
+        <p class="hint">Outgoing ActivityPub activities (Creates, Accepts, Deletes) queued for followers.</p>
+        <table>
+          <thead><tr><th>Type</th><th>File</th><th>Published</th></tr></thead>
+          <tbody data-activity-list>
+            <tr><td colspan="3">Loading…</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="followers">
+        <h2>Followers</h2>
+        <p class="hint">Remote actors that follow this node. Block removes them and refuses further activities from that actor or domain.</p>
+        <table>
+          <thead><tr><th>Actor</th><th>Host</th><th></th></tr></thead>
+          <tbody data-follower-list>
+            <tr><td colspan="3">Loading…</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="settings">
+        <h2>Settings</h2>
+        <form id="settings-form">
+          <label>Display name <input name="display_name" value="{{.Config.DisplayName}}" maxlength="80"></label>
+          <label>Username <input name="username" value="{{.Config.Username}}" maxlength="30"></label>
+          <label>Shared folder <input name="share_directory" value="{{.Config.ShareDirectory}}"></label>
+          <label>Gateway URL <input name="gateway_url" value="{{.Config.GatewayURL}}"></label>
+          <label>Short bio <textarea name="summary" rows="3" maxlength="500">{{.Config.Summary}}</textarea></label>
+          <label>Log level
+            <select name="log_level">
+              <option value="debug" {{if eq .Config.LogLevel "debug"}}selected{{end}}>debug</option>
+              <option value="info" {{if eq .Config.LogLevel "info"}}selected{{end}}>info</option>
+              <option value="warn" {{if eq .Config.LogLevel "warn"}}selected{{end}}>warn</option>
+              <option value="error" {{if eq .Config.LogLevel "error"}}selected{{end}}>error</option>
+            </select>
+          </label>
+          <label class="check"><input type="checkbox" name="start_at_login" {{if .Config.StartAtLogin}}checked{{end}}> Start FediShare automatically when I log in (saved now; OS login item arrives later)</label>
+          <p id="settings-error" class="error" hidden></p>
+          <button type="submit">Save settings</button>
+        </form>
+      </section>
+
+      <section id="about">
+        <h2>Logs / About</h2>
+        <p>FediShare {{.Version}} turns this computer into a small ActivityPub file-sharing node. Metadata can federate; file bytes stay here.</p>
+        <pre class="diag" data-diagnostics>Loading diagnostics…</pre>
+        <div class="actions">
+          <button type="button" class="secondary" data-action="copy-diag">Copy diagnostic information</button>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "id": "org.fedishare.gateway",
+  "title": "FediShare Gateway",
+  "tagline": "Stable ActivityPub address for FediShare desktop nodes",
+  "version": "0.6.0",
+  "manifestVersion": 2,
+  "minBoxVersion": "10.0.0",
+  "healthCheckPath": "/healthz",
+  "httpPort": 8000,
+  "addons": {
+    "localstorage": {}
+  },
+  "description": "file://packaging/cloudron/DESCRIPTION.md",
+  "changelog": "file://packaging/cloudron/CHANGELOG",
+  "icon": "file://assets/icon.png",
+  "iconUrl": "https://raw.githubusercontent.com/fedishare/fedishare/main/assets/icon.png",
+  "website": "https://github.com/fedishare/fedishare",
+  "packageUrl": "https://github.com/fedishare/fedishare",
+  "documentationUrl": "https://github.com/fedishare/fedishare/blob/main/docs/cloudron.md",
+  "packagerName": "FediShare",
+  "packagerUrl": "https://github.com/fedishare/fedishare",
+  "mediaLinks": [
+    "https://raw.githubusercontent.com/fedishare/fedishare/main/assets/icon.png"
+  ],
+  "postInstallMessage": "file://packaging/cloudron/POSTINSTALL.md",
+  "tags": [
+    "activitypub",
+    "federation",
+    "filesharing"
+  ],
+  "checklist": {
+    "desktop-gateway-url": {
+      "message": "On the FediShare desktop app, set **gateway_url** to this location's HTTPS origin (the Cloudron domain). The private key never leaves the desktop."
+    }
+  }
+}
