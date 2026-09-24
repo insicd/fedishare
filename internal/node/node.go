@@ -34,6 +34,12 @@ type Options struct {
 	// AllowLocalFederation permits loopback/private fetches. Tests and
 	// two nodes on one machine need this when a gateway URL is set.
 	AllowLocalFederation bool
+	// SkipHTTP leaves dashboard binding to Host when several profiles
+	// share one loopback port.
+	SkipHTTP bool
+	// ProfileID is the opaque directory name when this node is one of
+	// several local actors.
+	ProfileID string
 }
 
 // Node owns local process lifecycle: config, SQLite, status, and the loopback UI.
@@ -66,6 +72,8 @@ type Node struct {
 	watchCancel   context.CancelFunc
 	watchStarted  bool
 	allowLocal    bool
+	skipHTTP      bool
+	profileID     string
 	public        http.Handler
 	gatewayUp     bool
 	connecting    bool
@@ -97,6 +105,8 @@ func New(opts Options) (*Node, error) {
 		status:     status.New(),
 		keys:       crypto.KeyStore{Dir: config.KeysDir(opts.Home)},
 		allowLocal: opts.AllowLocalFederation,
+		skipHTTP:   opts.SkipHTTP,
+		profileID:  opts.ProfileID,
 	}, nil
 }
 
@@ -105,6 +115,14 @@ func (n *Node) Status() *status.Service { return n.status }
 func (n *Node) Config() *config.Config { return n.cfg }
 
 func (n *Node) Home() string { return n.home }
+
+func (n *Node) ProfileID() string { return n.profileID }
+
+func (n *Node) SetDashboardURL(url string) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.localURL = url
+}
 
 func (n *Node) DashboardURL() string {
 	n.mu.Lock()
@@ -327,9 +345,12 @@ func (n *Node) Start(ctx context.Context) error {
 		return n.fail(err)
 	}
 
-	if err := n.startHTTPLocked(); err != nil {
-		n.teardownLocked()
-		return n.fail(err)
+	n.public = httpserver.PublicHandler(n)
+	if !n.skipHTTP {
+		if err := n.startHTTPLocked(); err != nil {
+			n.teardownLocked()
+			return n.fail(err)
+		}
 	}
 
 	n.started = true

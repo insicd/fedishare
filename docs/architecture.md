@@ -42,15 +42,12 @@ Phase 2 added the tray, wizard, dashboard, and local RSA keys.
 A process start does the following:
 
 1. Resolve `--data-dir` or the OS default home.
-2. Create `home/`, `home/logs/`, and `home/keys/` with mode `0700`.
-3. Create `config.json` with defaults if it does not exist.
-4. Generate `keys/actor.pem` if it does not exist.
-5. Open `fedishare.db`, apply WAL/foreign-key pragmas, run migrations.
-6. Load or create a 128-bit `node_id` in the `config` table.
-7. Bind the dashboard to `127.0.0.1:<local_port>`.
-8. If `gateway_url` is set, dial the gateway and move `Connecting → Online`.
-9. Otherwise stay `Offline` with “Gateway not connected”.
-10. Show the tray and optionally open the browser.
+2. Create `home/` and `home/logs/` with mode `0700`, plus `home/app.json`.
+3. Migrate a legacy single-actor `config.json` into `home/profiles/{id}/` when needed.
+4. Start one Node per profile (own `config.json`, `keys/actor.pem`, SQLite).
+5. Bind one dashboard to `127.0.0.1:<local_port>`.
+6. Each configured profile dials the shared `gateway_url` with its own tunnel.
+7. Show the tray and optionally open the browser.
 
 Changing the shared folder later must not change this `node_id`. ActivityPub key material lives under `home/keys/` with `0600` files and is never sent to a gateway.
 

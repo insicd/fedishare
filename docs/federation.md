@@ -2,11 +2,11 @@
 
 FediShare speaks ActivityPub for identity and metadata only. File bytes never go through the inbox or outbox.
 
-Every Actor publishes a fixed Mastodon-style profile field (`attachment` PropertyValue) named `Fedishare` with value `https://github.com/insicd/fedishare`. The bio (`summary`) stays user-editable; that field does not.
+Every Actor publishes two fixed Mastodon-style profile fields (`attachment` PropertyValue): `My Web` with the actor’s public browser URL, then `Fedishare` with `https://github.com/insicd/fedishare`. The bio (`summary`) stays user-editable; those fields do not.
 
 Public file posts are `Create`/`Update`/`Delete` of a `Note` with a `Document` attachment. The Note id is a dereferenceable HTTP URL (`/users/{username}/notes/{id}`), `content` is HTML, and both the activity and the Note address `as:Public` in `to` plus the local followers collection in `cc`. That matches what Mastodon, Friendica, and WAFRN expect when they refetch the object.
 
-Browsers that open the actor or note URL with `Accept: text/html` receive a FediShare HTML page (bio, brand field, file list or download). Requests that prefer `application/activity+json` still get the ActivityPub document. The gateway stores only the JSON Actor in its offline cache.
+Browsers that open the actor or note URL with `Accept: text/html` receive a FediShare HTML page (bio, My Web and Fedishare fields, file list or download). Requests that prefer `application/activity+json` still get the ActivityPub document. The gateway stores only the JSON Actor in its offline cache.
 
 Lemmy is different: it stores community `Page`/`Article` objects, and treats a bare `Note` as a comment that needs `inReplyTo` plus a community `audience`. Following a FediShare Person on Lemmy can show the profile without ever listing the file posts. FediShare does not post into Lemmy communities.
 

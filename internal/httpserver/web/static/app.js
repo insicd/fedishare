@@ -46,6 +46,33 @@ function setNav() {
   if (hash === "#activity") refreshActivity().catch(() => {});
   if (hash === "#followers") refreshFollowers().catch(() => {});
   if (hash === "#about") refreshDiagnostics().catch(() => {});
+  if (hash === "#profiles") refreshProfiles().catch(() => {});
+}
+
+async function refreshProfiles() {
+  const data = await api("/api/profiles");
+  const list = document.querySelector("[data-profile-list]");
+  if (!list) return;
+  const profiles = data.profiles || [];
+  if (!profiles.length) {
+    list.innerHTML = `<li><p class="hint">No profiles yet.</p></li>`;
+    return;
+  }
+  list.innerHTML = profiles.map((p) => `
+    <li>
+      <div>
+        <a class="name" href="#status" data-select-profile="${p.id}">${escapeHtml(p.display_name || p.username || "")}</a>
+        <p class="meta">${escapeHtml(p.identity || "")} · ${escapeHtml(p.share_directory || "")}</p>
+      </div>
+      ${p.selected ? `<span class="hint">Selected</span>` : ""}
+    </li>
+  `).join("");
+}
+
+function escapeHtml(s) {
+  return String(s || "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
 }
 
 async function refreshStatus() {
@@ -201,6 +228,46 @@ function bindDashboard() {
     });
   });
 
+  document.addEventListener("click", async (ev) => {
+    const link = ev.target.closest("[data-select-profile]");
+    if (!link) return;
+    ev.preventDefault();
+    try {
+      await api("/api/profiles/select", { method: "POST", body: JSON.stringify({ id: link.getAttribute("data-select-profile") }) });
+      location.hash = "#status";
+      location.reload();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
+  const profileForm = document.getElementById("profile-form");
+  if (profileForm) {
+    profileForm.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const errEl = document.getElementById("profile-error");
+      const fd = new FormData(profileForm);
+      try {
+        await api("/api/profiles", {
+          method: "POST",
+          body: JSON.stringify({
+            display_name: fd.get("display_name"),
+            username: fd.get("username"),
+            share_directory: fd.get("share_directory"),
+            summary: fd.get("summary")
+          })
+        });
+        location.hash = "#status";
+        location.reload();
+      } catch (err) {
+        if (errEl) {
+          errEl.hidden = false;
+          errEl.textContent = err.message;
+        }
+      }
+    });
+  }
+
   const settings = document.getElementById("settings-form");
   if (settings) {
     settings.addEventListener("submit", async (ev) => {
@@ -266,6 +333,33 @@ function bindWizard() {
   });
 }
 
+function bindBrowseFolders() {
+  document.addEventListener("click", async (ev) => {
+    const btn = ev.target.closest("[data-browse-folder]");
+    if (!btn) return;
+    ev.preventDefault();
+    const wrap = btn.closest("label") || btn.parentElement;
+    const input = wrap && wrap.querySelector('input[name="share_directory"]');
+    if (!input) return;
+    btn.disabled = true;
+    try {
+      const data = await api("/api/browse-folder", {
+        method: "POST",
+        body: JSON.stringify({ start: input.value || "" })
+      });
+      if (data.path) {
+        input.value = data.path;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+}
+
+bindBrowseFolders();
 bindWizard();
 if (document.querySelector(".shell")) {
   bindDashboard();

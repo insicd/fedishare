@@ -3,6 +3,9 @@ package activitystreams
 import "html"
 
 const (
+	// WebFieldName is the fixed profile field that points at this actor's
+	// public browser URL.
+	WebFieldName = "My Web"
 	// BrandFieldName is the fixed Mastodon-style profile field on every actor.
 	BrandFieldName = "Fedishare"
 	// BrandFieldURL is the project homepage shown in that field.
@@ -23,12 +26,21 @@ type PropertyValue struct {
 	Value string `json:"value"`
 }
 
+// WebAttachment is the non-customizable public profile URL field.
+func WebAttachment(actorURL string) PropertyValue {
+	return linkAttachment(WebFieldName, actorURL)
+}
+
 // BrandAttachment is the non-customizable Fedishare profile field.
 func BrandAttachment() PropertyValue {
-	safe := html.EscapeString(BrandFieldURL)
+	return linkAttachment(BrandFieldName, BrandFieldURL)
+}
+
+func linkAttachment(name, rawURL string) PropertyValue {
+	safe := html.EscapeString(rawURL)
 	return PropertyValue{
 		Type:  "PropertyValue",
-		Name:  BrandFieldName,
+		Name:  name,
 		Value: `<a href="` + safe + `" rel="me nofollow noopener noreferrer" target="_blank">` + safe + `</a>`,
 	}
 }
@@ -66,7 +78,7 @@ func Person(paths Paths, displayName, summary, publicKeyPEM string) Actor {
 		Followers:         paths.Followers(),
 		Following:         paths.Following(),
 		URL:               paths.Actor(),
-		Attachment:        []PropertyValue{BrandAttachment()},
+		Attachment:        []PropertyValue{WebAttachment(paths.Actor()), BrandAttachment()},
 		PublicKey: PublicKey{
 			ID:           paths.KeyID(),
 			Owner:        paths.Actor(),

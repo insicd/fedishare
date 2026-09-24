@@ -22,6 +22,8 @@ type ProfilePage struct {
 	DisplayName string
 	Acct        string
 	Summary     string
+	WebName     string
+	WebURL      string
 	BrandName   string
 	BrandURL    string
 	JSONURL     string
@@ -68,6 +70,8 @@ func (h *Handler) writeProfile(w http.ResponseWriter, r *http.Request) {
 		DisplayName: display,
 		Acct:        acct,
 		Summary:     h.src.Summary(),
+		WebName:     activitystreams.WebFieldName,
+		WebURL:      paths.Actor(),
 		BrandName:   activitystreams.BrandFieldName,
 		BrandURL:    activitystreams.BrandFieldURL,
 		JSONURL:     paths.Actor(),
@@ -159,6 +163,8 @@ func ProfilePageFromActorJSON(raw string) ProfilePage {
 		DisplayName: display,
 		Acct:        acct,
 		Summary:     actor.Summary,
+		WebName:     activitystreams.WebFieldName,
+		WebURL:      jsonURL,
 		BrandName:   activitystreams.BrandFieldName,
 		BrandURL:    activitystreams.BrandFieldURL,
 		JSONURL:     jsonURL,

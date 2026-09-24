@@ -48,24 +48,25 @@ func run(args []string) error {
 		return err
 	}
 
-	cfg, created, err := config.LoadOrCreate(home)
+	if err := config.MigrateLegacyHome(home); err != nil {
+		return err
+	}
+	app, err := config.LoadApp(home)
 	if err != nil {
 		return err
 	}
 	if *logLevel != "" {
-		cfg.LogLevel = *logLevel
+		app.LogLevel = *logLevel
+		_ = app.Save(home)
 	}
 
-	logger, closeLog, err := logging.Setup(cfg.LogLevel, config.LogPath(home))
+	logger, closeLog, err := logging.Setup(app.LogLevel, config.LogPath(home))
 	if err != nil {
 		return err
 	}
 	defer func() { _ = closeLog() }()
-	if created {
-		logger.Info("created config.json")
-	}
 
-	n, err := node.New(node.Options{Home: home, Config: cfg, Log: logger})
+	h, err := node.NewHost(home, logger)
 	if err != nil {
 		return err
 	}
@@ -73,12 +74,12 @@ func run(args []string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	if err := n.Start(ctx); err != nil {
+	if err := h.Start(ctx); err != nil {
 		return err
 	}
 
-	url := n.DashboardURL()
-	snap := n.Status().Snapshot()
+	url := h.DashboardURL()
+	snap := h.Status().Snapshot()
 	fmt.Fprintf(os.Stderr, "%s %s — %s (%s)\n", version.AppName, version.Version, snap.State.Label(), snap.Message)
 	fmt.Fprintf(os.Stderr, "Dashboard: %s\n", url)
 	if !*noOpen {
@@ -91,31 +92,31 @@ func run(args []string) error {
 		<-ctx.Done()
 	} else {
 		tray.Run(ctx, tray.Options{
-			Status: n.Status(),
+			Status: h.Status(),
 			Log:    logger,
 			OpenDashboard: func() {
-				_ = desktop.OpenURL(n.DashboardURL())
+				_ = desktop.OpenURL(h.DashboardURL())
 			},
 			OpenShareFolder: func() {
-				_ = desktop.OpenPath(n.Config().ShareDirectory)
+				_ = desktop.OpenPath(h.Config().ShareDirectory)
 			},
 			Rescan: func() {
-				_ = n.Rescan(context.Background())
+				_ = h.Rescan(context.Background())
 			},
 			CopyAddress: func() {
-				_ = desktop.CopyText(n.Config().FediverseAddress())
+				_ = desktop.CopyText(h.Config().FediverseAddress())
 			},
 			Pause: func() {
-				_ = n.Pause(context.Background())
+				_ = h.Pause(context.Background())
 			},
 			Resume: func() {
-				_ = n.Resume(context.Background())
+				_ = h.Resume(context.Background())
 			},
 			OpenSettings: func() {
-				_ = desktop.OpenURL(n.DashboardURL() + "/#settings")
+				_ = desktop.OpenURL(h.DashboardURL() + "/#settings")
 			},
 			OpenAbout: func() {
-				_ = desktop.OpenURL(n.DashboardURL() + "/#about")
+				_ = desktop.OpenURL(h.DashboardURL() + "/#about")
 			},
 			OnQuit: stop,
 		})
@@ -123,5 +124,5 @@ func run(args []string) error {
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	return n.Shutdown(shutdownCtx)
+	return h.Shutdown(shutdownCtx)
 }

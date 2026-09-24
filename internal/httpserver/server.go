@@ -51,8 +51,35 @@ func New(backend Backend, log *slog.Logger) (http.Handler, error) {
 	mux.HandleFunc("POST /api/pause", s.postPause)
 	mux.HandleFunc("POST /api/resume", s.postResume)
 	mux.HandleFunc("PUT /api/settings", s.putSettings)
-	MountPublic(mux, backend)
+	mux.HandleFunc("GET /api/profiles", s.getProfiles)
+	mux.HandleFunc("POST /api/profiles", s.postProfiles)
+	mux.HandleFunc("POST /api/profiles/select", s.postSelectProfile)
+	mux.HandleFunc("POST /api/browse-folder", s.postBrowseFolder)
+	if router, ok := backend.(PublicRouter); ok {
+		mountPublicRouter(mux, router)
+	} else {
+		MountPublic(mux, backend)
+	}
 	return s.wrap(mux), nil
+}
+
+func mountPublicRouter(mux *http.ServeMux, router PublicRouter) {
+	fn := router.ServePublic
+	mux.HandleFunc("GET /.well-known/webfinger", fn)
+	mux.HandleFunc("GET /users/{username}", fn)
+	mux.HandleFunc("GET /users/{username}/outbox", fn)
+	mux.HandleFunc("GET /users/{username}/followers", fn)
+	mux.HandleFunc("GET /users/{username}/following", fn)
+	mux.HandleFunc("GET /users/{username}/inbox", fn)
+	mux.HandleFunc("POST /users/{username}/inbox", fn)
+	mux.HandleFunc("GET /users/{username}/files/{id}", fn)
+	mux.HandleFunc("GET /users/{username}/notes/{id}", fn)
+	mux.HandleFunc("GET /users/{username}/activities/{id}", fn)
+	mux.HandleFunc("GET /users/{username}/download/{id}", fn)
+	mux.HandleFunc("HEAD /users/{username}/download/{id}", fn)
+	filesH := router.(Backend).FileHandler()
+	mux.Handle("GET /files/{id}", filesH)
+	mux.Handle("HEAD /files/{id}", filesH)
 }
 
 func parseTemplates() (*template.Template, error) {

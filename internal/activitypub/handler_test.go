@@ -127,6 +127,9 @@ func TestWebFingerAndActor(t *testing.T) {
 		t.Fatalf("%v", actor)
 	}
 	rawActor, _ := json.Marshal(actor)
+	if !strings.Contains(string(rawActor), "My Web") || !strings.Contains(string(rawActor), "https://nodes.example.org/users/alice") {
+		t.Fatalf("missing my web field: %s", rawActor)
+	}
 	if !strings.Contains(string(rawActor), "Fedishare") || !strings.Contains(string(rawActor), "github.com/insicd/fedishare") {
 		t.Fatalf("missing brand field: %s", rawActor)
 	}

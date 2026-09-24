@@ -38,7 +38,7 @@ func TestActorAndNoteHTML(t *testing.T) {
 		t.Fatalf("ctype=%s", rec.Header().Get("Content-Type"))
 	}
 	body := rec.Body.String()
-	for _, need := range []string{"Alice", "@alice@nodes.example.org", "Sharing files.", "hello.txt", "Fedishare", "github.com/insicd/fedishare"} {
+	for _, need := range []string{"Alice", "@alice@nodes.example.org", "Sharing files.", "hello.txt", "My Web", "https://nodes.example.org/users/alice", "Fedishare", "github.com/insicd/fedishare"} {
 		if !strings.Contains(body, need) {
 			t.Fatalf("missing %q in %s", need, body)
 		}
@@ -58,5 +58,8 @@ func TestProfilePageFromActorJSON(t *testing.T) {
 	page := ProfilePageFromActorJSON(`{"id":"https://nodes.example.org/users/alice","preferredUsername":"alice","name":"Alice","summary":"hi"}`)
 	if page.DisplayName != "Alice" || page.Acct != "@alice@nodes.example.org" || page.Summary != "hi" {
 		t.Fatalf("%+v", page)
+	}
+	if page.WebName != "My Web" || page.WebURL != "https://nodes.example.org/users/alice" {
+		t.Fatalf("web field %+v", page)
 	}
 }

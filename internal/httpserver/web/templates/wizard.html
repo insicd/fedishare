@@ -24,7 +24,10 @@
       </label>
       <label>
         Shared folder
-        <input name="share_directory" required placeholder="{{.SuggestedShare}}" value="{{.SuggestedShare}}">
+        <div class="path-row">
+          <input name="share_directory" required placeholder="{{.SuggestedShare}}" value="{{.SuggestedShare}}">
+          <button type="button" class="secondary" data-browse-folder>Browse…</button>
+        </div>
         <span class="hint">Only this folder will be visible. It is not your settings folder.</span>
       </label>
       <label>
@@ -35,7 +38,7 @@
       <label>
         Short bio <span class="optional">optional</span>
         <textarea name="summary" maxlength="500" rows="3" placeholder="Files I am happy to share."></textarea>
-        <span class="hint">Every public profile also shows a fixed Fedishare link. It cannot be changed.</span>
+        <span class="hint">Every public profile also shows a fixed My Web link (this actor’s public URL) and a Fedishare link. They cannot be changed.</span>
       </label>
       <p id="wizard-error" class="error" hidden></p>
       <button type="submit">Start FediShare</button>

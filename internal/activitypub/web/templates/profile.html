@@ -17,6 +17,12 @@
     </section>
     {{end}}
     <section class="card">
+      {{if .WebURL}}
+      <dl class="field">
+        <dt>{{.WebName}}</dt>
+        <dd><a href="{{.WebURL}}" rel="me nofollow noopener noreferrer">{{.WebURL}}</a></dd>
+      </dl>
+      {{end}}
       <dl class="field">
         <dt>{{.BrandName}}</dt>
         <dd><a href="{{.BrandURL}}" rel="me nofollow noopener noreferrer">{{.BrandURL}}</a></dd>

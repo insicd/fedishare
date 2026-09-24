@@ -32,6 +32,18 @@ type Backend interface {
 	Unblock(ctx context.Context, target string) error
 }
 
+// Profiles is implemented by a multi-actor desktop host.
+type Profiles interface {
+	Profiles() []config.ProfileInfo
+	SelectProfile(id string) error
+	CreateProfile(ctx context.Context, in SetupRequest) error
+}
+
+// PublicRouter dispatches public ActivityPub URLs to the matching local actor.
+type PublicRouter interface {
+	ServePublic(w http.ResponseWriter, r *http.Request)
+}
+
 type SetupRequest struct {
 	DisplayName    string `json:"display_name"`
 	Username       string `json:"username"`

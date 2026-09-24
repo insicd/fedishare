@@ -76,6 +76,8 @@ On first start FediShare writes `config.json` into the data directory, generates
 
 The shared folder is never used as the config or database location.
 
+One desktop app can run several **profiles**. Each profile is a separate Actor (`@alice@…`, `@work@…`) with its own shared folder and RSA key. They all use the same `gateway_url`. Existing single-actor data directories are moved into `profiles/` on first launch.
+
 Useful flags:
 
 | Flag | Meaning |

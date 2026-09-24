@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"encoding/json"
+	"errors"
 	"html/template"
 	"net/http"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/fedishare/fedishare/internal/activitystreams"
 	"github.com/fedishare/fedishare/internal/apperr"
 	"github.com/fedishare/fedishare/internal/config"
+	"github.com/fedishare/fedishare/internal/desktop"
 	"github.com/fedishare/fedishare/internal/federation"
 	"github.com/fedishare/fedishare/internal/files"
 	"github.com/fedishare/fedishare/internal/logging"
@@ -31,6 +33,7 @@ type pageData struct {
 	Version        string
 	DefaultShare   string
 	DefaultGateway string
+	Profiles       []config.ProfileInfo
 }
 
 func (s *Server) page(tmpl *template.Template, _ string) http.HandlerFunc {
@@ -47,6 +50,7 @@ func (s *Server) page(tmpl *template.Template, _ string) http.HandlerFunc {
 			Version:        version.Version,
 			DefaultShare:   config.DefaultShareDirectory(),
 			DefaultGateway: config.DefaultGatewayURL,
+			Profiles:       s.profiles(),
 		}
 		name := "dashboard.html"
 		if !cfg.Configured() {
@@ -71,7 +75,58 @@ func (s *Server) getStatus(w http.ResponseWriter, r *http.Request) {
 		"gateway_url":     cfg.GatewayURL,
 		"dashboard_url":   s.backend.DashboardURL(),
 		"version":         version.Version,
+		"profiles":        s.profiles(),
 	})
+}
+
+func (s *Server) profiles() []config.ProfileInfo {
+	p, ok := s.backend.(Profiles)
+	if !ok {
+		return nil
+	}
+	return p.Profiles()
+}
+
+func (s *Server) getProfiles(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"profiles": s.profiles()})
+}
+
+func (s *Server) postProfiles(w http.ResponseWriter, r *http.Request) {
+	p, ok := s.backend.(Profiles)
+	if !ok {
+		http.Error(w, "profiles are not available", http.StatusNotImplemented)
+		return
+	}
+	var in SetupRequest
+	if err := decodeJSON(r, &in); err != nil {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+	if err := p.CreateProfile(r.Context(), in); err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "profiles": s.profiles()})
+}
+
+func (s *Server) postSelectProfile(w http.ResponseWriter, r *http.Request) {
+	p, ok := s.backend.(Profiles)
+	if !ok {
+		http.Error(w, "profiles are not available", http.StatusNotImplemented)
+		return
+	}
+	var in struct {
+		ID string `json:"id"`
+	}
+	if err := decodeJSON(r, &in); err != nil || strings.TrimSpace(in.ID) == "" {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+	if err := p.SelectProfile(strings.TrimSpace(in.ID)); err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "profiles": s.profiles()})
 }
 
 func (s *Server) getFiles(w http.ResponseWriter, r *http.Request) {
@@ -173,6 +228,25 @@ func (s *Server) getDiagnostics(w http.ResponseWriter, r *http.Request) {
 		"last_federation_err": snap.LastFederationError,
 		"keys_present":        fileExists(filepath.Join(config.KeysDir(s.backend.Home()), "actor.pem")),
 	})
+}
+
+func (s *Server) postBrowseFolder(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Start string `json:"start"`
+	}
+	if r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&in)
+	}
+	path, err := desktop.ChooseFolder(in.Start)
+	if errors.Is(err, desktop.ErrCanceled) {
+		writeJSON(w, http.StatusOK, map[string]any{"cancelled": true})
+		return
+	}
+	if err != nil {
+		writeError(w, apperr.Wrap(apperr.KindFilesystem, err.Error(), err))
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"path": path})
 }
 
 func (s *Server) postSetup(w http.ResponseWriter, r *http.Request) {

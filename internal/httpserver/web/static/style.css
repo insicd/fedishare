@@ -34,6 +34,9 @@ button {
 button.secondary { background: #ece6dc; color: var(--ink); }
 button[hidden] { display: none; }
 label { display: block; margin: 0.9rem 0; font-weight: 600; }
+.path-row { display: flex; gap: 0.5rem; align-items: flex-end; }
+.path-row input { flex: 1; min-width: 0; width: auto; }
+.path-row button { flex: 0 0 auto; margin-top: 0.35rem; white-space: nowrap; }
 .hint, .optional, .message, .empty, .lede { color: var(--muted); font-weight: 400; }
 .optional { font-size: 0.85rem; }
 .error { color: var(--danger); }
@@ -59,6 +62,9 @@ table { width: 100%; border-collapse: collapse; background: var(--panel); }
 th, td { text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
 .diag { background: #1c1916; color: #f4f1ea; padding: 1rem; border-radius: 10px; overflow: auto; white-space: pre-wrap; }
 .check { font-weight: 500; }
+.profile-list { list-style: none; margin: 0; padding: 0; }
+.profile-list li { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; padding: 0.7rem 0; border-bottom: 1px solid var(--line); }
+.profile-list .name { font-weight: 650; color: var(--ink); }
 .check input { width: auto; margin-right: 0.5rem; }
 @media (max-width: 720px) {
   .shell { grid-template-columns: 1fr; }

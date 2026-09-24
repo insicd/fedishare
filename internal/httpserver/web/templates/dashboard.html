@@ -16,6 +16,7 @@
         <a href="#files">Shared files</a>
         <a href="#activity">Activity</a>
         <a href="#followers">Followers</a>
+        <a href="#profiles">Profiles</a>
         <a href="#settings">Settings</a>
         <a href="#about">Logs / About</a>
       </nav>
@@ -74,17 +75,56 @@
         </table>
       </section>
 
+      <section id="profiles">
+        <h2>Profiles</h2>
+        <p class="hint">Each profile is a separate Fediverse actor with its own folder and keys. They share this gateway.</p>
+        <ul class="profile-list" data-profile-list>
+          {{range .Profiles}}
+          <li>
+            <div>
+              <a class="name" href="#status" data-select-profile="{{.ID}}">{{if .DisplayName}}{{.DisplayName}}{{else}}{{.Username}}{{end}}</a>
+              <p class="meta">{{.Identity}} · {{.ShareDirectory}}</p>
+            </div>
+            {{if .Selected}}<span class="hint">Selected</span>{{end}}
+          </li>
+          {{else}}
+          <li><p class="hint">No profiles yet.</p></li>
+          {{end}}
+        </ul>
+        <h3>Add a profile</h3>
+        <form id="profile-form">
+          <label>Display name <input name="display_name" maxlength="80" required></label>
+          <label>Username <input name="username" maxlength="30" pattern="[A-Za-z0-9_]+" required>
+            <span class="hint">Must be unique on this computer and on the gateway.</span>
+          </label>
+          <label>Shared folder
+            <div class="path-row">
+              <input name="share_directory" required placeholder="{{.DefaultShare}}">
+              <button type="button" class="secondary" data-browse-folder>Browse…</button>
+            </div>
+          </label>
+          <label>Short bio <textarea name="summary" rows="2" maxlength="500"></textarea></label>
+          <p id="profile-error" class="error" hidden></p>
+          <button type="submit">Create profile</button>
+        </form>
+      </section>
+
       <section id="settings">
         <h2>Settings</h2>
         <form id="settings-form">
           <label>Display name <input name="display_name" value="{{.Config.DisplayName}}" maxlength="80"></label>
           <label>Username <input name="username" value="{{.Config.Username}}" maxlength="30"></label>
-          <label>Shared folder <input name="share_directory" value="{{.Config.ShareDirectory}}"></label>
+          <label>Shared folder
+            <div class="path-row">
+              <input name="share_directory" value="{{.Config.ShareDirectory}}">
+              <button type="button" class="secondary" data-browse-folder>Browse…</button>
+            </div>
+          </label>
           <label>Gateway URL <input name="gateway_url" type="url" value="{{if .Config.GatewayURL}}{{.Config.GatewayURL}}{{else}}{{.DefaultGateway}}{{end}}" placeholder="{{.DefaultGateway}}">
             <span class="hint">Official FediShare gateway. Change this only if you run your own.</span>
           </label>
           <label>Short bio <textarea name="summary" rows="3" maxlength="500">{{.Config.Summary}}</textarea>
-            <span class="hint">Every public profile also shows a fixed Fedishare link. It cannot be changed.</span>
+            <span class="hint">Every public profile also shows a fixed My Web link (this actor’s public URL) and a Fedishare link. They cannot be changed.</span>
           </label>
           <label>Log level
             <select name="log_level">

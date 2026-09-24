@@ -13,10 +13,12 @@ All notable changes to FediShare are documented here.
 - Package the gateway for Cloudron and Docker Hub (`Dockerfile`, `CloudronManifest.json`): HTTP on :8000, data in `/app/data`, TLS left to the platform.
 - Keep the same file id (and download URL) when a shared file is renamed or moved; publish an Update instead of Delete+Create. Directory moves trigger a rescan so children are not left pointing at dead paths.
 - Default the desktop `gateway_url` to `https://fedishare.console.itagora.it` (users can still point at their own gateway).
-- Publish a fixed Actor profile field `Fedishare` → `https://github.com/insicd/fedishare` on every node; it is not user-editable.
+- Publish two fixed Actor profile fields on every node: `My Web` → the actor’s public browser URL, then `Fedishare` → `https://github.com/insicd/fedishare`. Neither is user-editable.
 - Serve each file Note at a dereferenceable `/users/{username}/notes/{id}` (no `#object` fragment), address followers in `cc`, and emit HTML `content` so Friendica and WAFRN can refetch and render posts. Lemmy still will not list these Notes as community posts.
 - Serve a public FediShare HTML profile (and per-file note page) when a browser sends `Accept: text/html`; ActivityPub clients still receive JSON. The gateway caches only Actor JSON so an HTML visit cannot poison federation.
 - Sign outbound Actor GETs (authorized fetch) so Follows from instances such as mastodon.social can be verified and accepted.
+- Allow several local profiles in one desktop process: each actor has its own folder and keys, all share the same gateway and stay online together.
+- Open the system folder picker (Browse…) when choosing a share directory, so the path does not have to be typed.
 
 ## 0.5.0-dev — Phase 5
 
