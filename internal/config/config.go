@@ -20,6 +20,10 @@ const (
 	DefaultMaxConcurrentDownloads = 8
 	DefaultLogLevel               = "info"
 
+	// DefaultGatewayURL is the official rendezvous. Users may replace it
+	// with their own gateway.
+	DefaultGatewayURL = "https://fedishare.console.itagora.it"
+
 	maxDisplayName = 80
 	maxSummary     = 500
 	maxUsername    = 30
@@ -54,6 +58,7 @@ func Default() Config {
 		BandwidthLimitBPS:      0,
 		LogLevel:               DefaultLogLevel,
 		StartAtLogin:           false,
+		GatewayURL:             DefaultGatewayURL,
 	}
 }
 

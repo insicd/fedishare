@@ -11,6 +11,9 @@ All notable changes to FediShare are documented here.
 - Move the desktop to Connecting → Online when the tunnel is up, with bounded exponential backoff and jitter on reconnect.
 - Keep the admin dashboard on loopback; the gateway never exposes `/api` or stores private keys or file bytes.
 - Package the gateway for Cloudron and Docker Hub (`Dockerfile`, `CloudronManifest.json`): HTTP on :8000, data in `/app/data`, TLS left to the platform.
+- Keep the same file id (and download URL) when a shared file is renamed or moved; publish an Update instead of Delete+Create. Directory moves trigger a rescan so children are not left pointing at dead paths.
+- Default the desktop `gateway_url` to `https://fedishare.console.itagora.it` (users can still point at their own gateway).
+- Publish a fixed Actor profile field `Fedishare` → `https://github.com/insicd/fedishare` on every node; it is not user-editable.
 
 ## 0.5.0-dev — Phase 5
 

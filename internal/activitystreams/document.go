@@ -13,7 +13,16 @@ const (
 )
 
 // ActorContext is the JSON-LD context used on Person objects.
-var ActorContext = []any{Context, SecurityContext}
+// The third term lets Mastodon-compatible clients render PropertyValue fields.
+var ActorContext = []any{
+	Context,
+	SecurityContext,
+	map[string]any{
+		"schema":        "http://schema.org#",
+		"PropertyValue": "schema:PropertyValue",
+		"value":         "schema:value",
+	},
+}
 
 // Document builds a generic ActivityStreams Document for a shared file.
 // Extra FediShare fields live under a namespaced prefix so generic

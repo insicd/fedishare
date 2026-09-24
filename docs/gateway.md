@@ -2,7 +2,7 @@
 
 The gateway is a small Go process that runs on a public VPS. It gives a desktop node behind NAT a stable Actor URL. It is not a file host and it is not required for local indexing.
 
-There is no hardcoded domain. Any operator can run `fedishare-gateway` and point `gateway_url` at it.
+The desktop defaults `gateway_url` to `https://fedishare.console.itagora.it`. Operators who run their own `fedishare-gateway` can replace that URL in Settings.
 
 ## What it stores
 

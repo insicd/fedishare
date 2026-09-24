@@ -17,7 +17,7 @@ Cloudron boxes are **linux/amd64**. On Apple Silicon always pass `--platform lin
 The dashboard does not take a Dockerfile. It wants a **`CloudronVersions.json`**: a small catalog that points at the Docker image you already pushed.
 
 1. Open `CloudronVersions.json` in this repo.
-2. Replace `YOURUSER/fedishare-gateway:0.6.0` with the exact Hub image you pushed (for example `alice/fedishare-gateway:0.6.0`).
+2. Replace `nuke86/fedishare-gateway:0.6.0` with the exact Hub image you pushed (for example `alice/fedishare-gateway:0.6.0`).
 3. In Cloudron: **App Store → Community apps / My → add** and upload that file  
    (or paste a public HTTPS URL to it, if you host the file).
 4. Install **FediShare Gateway** on the domain you already attached.
@@ -34,18 +34,18 @@ Create a public repository on hub.docker.com (the free plan allows unlimited pub
 docker login
 
 docker build --platform linux/amd64 \
-  -t YOURUSER/fedishare-gateway:0.6.0 \
-  -t YOURUSER/fedishare-gateway:latest \
+  -t nuke86/fedishare-gateway:0.6.0 \
+  -t nuke86/fedishare-gateway:latest \
   .
 
-docker push YOURUSER/fedishare-gateway:0.6.0
-docker push YOURUSER/fedishare-gateway:latest
+docker push nuke86/fedishare-gateway:0.6.0
+docker push nuke86/fedishare-gateway:latest
 
 cloudron login your.cloudron.host
 
 # run this from the repository root so CloudronManifest.json is found
 cloudron install \
-  --image YOURUSER/fedishare-gateway:0.6.0 \
+  --image nuke86/fedishare-gateway:0.6.0 \
   --location nodes
 ```
 
@@ -54,9 +54,9 @@ cloudron install \
 Updates:
 
 ```bash
-docker build --platform linux/amd64 -t YOURUSER/fedishare-gateway:0.6.1 .
-docker push YOURUSER/fedishare-gateway:0.6.1
-cloudron update --image YOURUSER/fedishare-gateway:0.6.1
+docker build --platform linux/amd64 -t nuke86/fedishare-gateway:0.6.1 .
+docker push nuke86/fedishare-gateway:0.6.1
+cloudron update --image nuke86/fedishare-gateway:0.6.1
 ```
 
 ## Option B — build on the Cloudron box
@@ -92,7 +92,7 @@ docker run --rm \
   -p 8080:8000 \
   -e FEDISHARE_PUBLIC_URL=https://nodes.example.org \
   -v fedishare-gateway:/app/data \
-  YOURUSER/fedishare-gateway:0.6.0
+  nuke86/fedishare-gateway:0.6.0
 ```
 
 Put a TLS terminator in front. The same volume must be kept across restarts: it holds registered usernames and public keys.

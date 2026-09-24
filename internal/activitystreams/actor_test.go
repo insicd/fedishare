@@ -32,10 +32,13 @@ func TestPersonSerialization(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := string(raw)
-	for _, need := range []string{`"preferredUsername":"alice"`, `"type":"Person"`, "publicKeyPem", Context, SecurityContext} {
+	for _, need := range []string{`"preferredUsername":"alice"`, `"type":"Person"`, "publicKeyPem", Context, SecurityContext, BrandFieldName, BrandFieldURL, "PropertyValue", "schema.org"} {
 		if !strings.Contains(s, need) {
 			t.Fatalf("missing %q in %s", need, s)
 		}
+	}
+	if len(actor.Attachment) != 1 || actor.Attachment[0].Name != BrandFieldName {
+		t.Fatalf("attachment=%+v", actor.Attachment)
 	}
 }
 

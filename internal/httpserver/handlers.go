@@ -30,6 +30,7 @@ type pageData struct {
 	DashboardURL   string
 	Version        string
 	DefaultShare   string
+	DefaultGateway string
 }
 
 func (s *Server) page(tmpl *template.Template, _ string) http.HandlerFunc {
@@ -45,6 +46,7 @@ func (s *Server) page(tmpl *template.Template, _ string) http.HandlerFunc {
 			DashboardURL:   s.backend.DashboardURL(),
 			Version:        version.Version,
 			DefaultShare:   config.DefaultShareDirectory(),
+			DefaultGateway: config.DefaultGatewayURL,
 		}
 		name := "dashboard.html"
 		if !cfg.Configured() {

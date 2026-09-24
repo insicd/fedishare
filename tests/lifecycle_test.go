@@ -25,6 +25,7 @@ func TestPhase1Lifecycle(t *testing.T) {
 	cfg.DisplayName = "Alice"
 	cfg.LocalPort = 0
 	cfg.ShareDirectory = share
+	cfg.GatewayURL = ""
 	if err := cfg.Save(home); err != nil {
 		t.Fatal(err)
 	}

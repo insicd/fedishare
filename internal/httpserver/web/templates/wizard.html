@@ -28,13 +28,14 @@
         <span class="hint">Only this folder will be visible. It is not your settings folder.</span>
       </label>
       <label>
-        Gateway URL <span class="optional">optional</span>
-        <input name="gateway_url" type="url" placeholder="https://nodes.example.org">
-        <span class="hint">A rendezvous server for people behind NAT. You can add this later.</span>
+        Gateway URL
+        <input name="gateway_url" type="url" value="{{if .Config.GatewayURL}}{{.Config.GatewayURL}}{{else}}{{.DefaultGateway}}{{end}}" placeholder="{{.DefaultGateway}}">
+        <span class="hint">Official FediShare gateway. Change this only if you run your own.</span>
       </label>
       <label>
         Short bio <span class="optional">optional</span>
         <textarea name="summary" maxlength="500" rows="3" placeholder="Files I am happy to share."></textarea>
+        <span class="hint">Every public profile also shows a fixed Fedishare link. It cannot be changed.</span>
       </label>
       <p id="wizard-error" class="error" hidden></p>
       <button type="submit">Start FediShare</button>

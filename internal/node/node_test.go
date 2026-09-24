@@ -92,6 +92,7 @@ func TestStartConfiguredPersistsNodeID(t *testing.T) {
 	cfg, home := ephemeral(t)
 	cfg.Username = "alice"
 	cfg.ShareDirectory = filepath.Join(home, "share")
+	cfg.GatewayURL = ""
 	if err := cfg.Save(home); err != nil {
 		t.Fatal(err)
 	}
@@ -180,6 +181,7 @@ func TestPauseResumePersists(t *testing.T) {
 	cfg, home := ephemeral(t)
 	cfg.Username = "bob"
 	cfg.ShareDirectory = filepath.Join(home, "share")
+	cfg.GatewayURL = ""
 	if err := os.Mkdir(cfg.ShareDirectory, 0o755); err != nil {
 		t.Fatal(err)
 	}

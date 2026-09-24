@@ -126,6 +126,10 @@ func TestWebFingerAndActor(t *testing.T) {
 	if actor["type"] != "Person" || actor["preferredUsername"] != "alice" {
 		t.Fatalf("%v", actor)
 	}
+	rawActor, _ := json.Marshal(actor)
+	if !strings.Contains(string(rawActor), "Fedishare") || !strings.Contains(string(rawActor), "github.com/insicd/fedishare") {
+		t.Fatalf("missing brand field: %s", rawActor)
+	}
 	if actor["inbox"] != "https://nodes.example.org/users/alice/inbox" {
 		t.Fatalf("inbox=%v", actor["inbox"])
 	}

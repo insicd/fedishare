@@ -19,14 +19,14 @@
         },
         "description": "FediShare Gateway gives desktop FediShare nodes a stable ActivityPub address.\n\nIt is a rendezvous service, not a file host. The container stores usernames, public keys, and a small Actor/WebFinger cache under `/app/data`. Private keys and shared files stay on the user's computer.\n\nAfter install, set `gateway_url` on the desktop app to this location's HTTPS origin.",
         "changelog": "* Initial Cloudron package for fedishare-gateway\n* HTTP/1.1 Upgrade tunnel, challenge-response auth, cached Actor/WebFinger when the node is offline",
-        "website": "https://github.com/fedishare/fedishare",
-        "packageUrl": "https://github.com/fedishare/fedishare",
-        "documentationUrl": "https://github.com/fedishare/fedishare/blob/main/docs/cloudron.md",
+        "website": "https://github.com/insicd/fedishare",
+        "packageUrl": "https://github.com/insicd/fedishare",
+        "documentationUrl": "https://github.com/insicd/fedishare/blob/main/docs/cloudron.md",
         "packagerName": "FediShare",
-        "packagerUrl": "https://github.com/fedishare/fedishare",
-        "iconUrl": "https://raw.githubusercontent.com/fedishare/fedishare/main/assets/icon.png",
+        "packagerUrl": "https://github.com/insicd/fedishare",
+        "iconUrl": "https://raw.githubusercontent.com/insicd/fedishare/main/assets/icon.png",
         "mediaLinks": [
-          "https://raw.githubusercontent.com/fedishare/fedishare/main/assets/icon.png"
+          "https://raw.githubusercontent.com/insicd/fedishare/main/assets/icon.png"
         ],
         "tags": [
           "activitypub",

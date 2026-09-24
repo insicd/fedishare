@@ -33,6 +33,63 @@ func (s *Store) GetByPath(ctx context.Context, rel string) (Record, error) {
 	return s.scanOne(ctx, `SELECT id, relative_path, filename, mime_type, size, hash_algorithm, hash_digest, modified_at, indexed_at, available, visibility FROM files WHERE relative_path = ?`, rel)
 }
 
+func (s *Store) ListByHash(ctx context.Context, algo, digest string) ([]Record, error) {
+	rows, err := s.db.SQL().QueryContext(ctx, `
+		SELECT id, relative_path, filename, mime_type, size, hash_algorithm, hash_digest, modified_at, indexed_at, available, visibility
+		FROM files WHERE hash_algorithm = ? AND hash_digest = ?`, algo, digest)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanRows(rows)
+}
+
+func (s *Store) DeleteByID(ctx context.Context, id string) error {
+	_, err := s.db.SQL().ExecContext(ctx, `DELETE FROM files WHERE id = ?`, id)
+	return err
+}
+
+// Save writes rec by id when rec.ID is set, otherwise by path.
+func (s *Store) Save(ctx context.Context, rec Record) (Record, error) {
+	if rec.ID == "" {
+		return s.Upsert(ctx, rec)
+	}
+	if _, err := s.GetByID(ctx, rec.ID); err != nil {
+		return s.Upsert(ctx, rec)
+	}
+	if other, err := s.GetByPath(ctx, rec.RelativePath); err == nil && other.ID != rec.ID {
+		if err := s.DeleteByID(ctx, other.ID); err != nil {
+			return Record{}, err
+		}
+	}
+	if rec.Visibility == "" {
+		rec.Visibility = VisibilityPublic
+	}
+	now := time.Now().UTC()
+	if rec.IndexedAt.IsZero() {
+		rec.IndexedAt = now
+	}
+	avail := 0
+	if rec.Available {
+		avail = 1
+	}
+	_, err := s.db.SQL().ExecContext(ctx, `
+		UPDATE files SET
+			relative_path = ?, filename = ?, mime_type = ?, size = ?,
+			hash_algorithm = ?, hash_digest = ?, modified_at = ?, indexed_at = ?,
+			available = ?, visibility = ?
+		WHERE id = ?`,
+		rec.RelativePath, rec.Filename, rec.MIMEType, rec.Size,
+		rec.Hash.Algorithm, rec.Hash.Digest,
+		rec.ModifiedAt.UTC().Format(time.RFC3339),
+		rec.IndexedAt.UTC().Format(time.RFC3339),
+		avail, rec.Visibility, rec.ID)
+	if err != nil {
+		return Record{}, fmt.Errorf("save file: %w", err)
+	}
+	return rec, nil
+}
+
 func (s *Store) scanOne(ctx context.Context, q string, arg any) (Record, error) {
 	var rec Record
 	var modified, indexed string
@@ -125,21 +182,7 @@ func (s *Store) ListAvailable(ctx context.Context, limit int) ([]Record, error) 
 		return nil, err
 	}
 	defer rows.Close()
-	var out []Record
-	for rows.Next() {
-		var rec Record
-		var modified, indexed string
-		var available int
-		if err := rows.Scan(&rec.ID, &rec.RelativePath, &rec.Filename, &rec.MIMEType, &rec.Size,
-			&rec.Hash.Algorithm, &rec.Hash.Digest, &modified, &indexed, &available, &rec.Visibility); err != nil {
-			return nil, err
-		}
-		rec.Available = available == 1
-		rec.ModifiedAt, _ = time.Parse(time.RFC3339, modified)
-		rec.IndexedAt, _ = time.Parse(time.RFC3339, indexed)
-		out = append(out, rec)
-	}
-	return out, rows.Err()
+	return scanRows(rows)
 }
 
 func (s *Store) CountPublic(ctx context.Context) (int, error) {
@@ -167,21 +210,7 @@ func (s *Store) ListPublicPage(ctx context.Context, offset, limit int) ([]Record
 		return nil, err
 	}
 	defer rows.Close()
-	var out []Record
-	for rows.Next() {
-		var rec Record
-		var modified, indexed string
-		var available int
-		if err := rows.Scan(&rec.ID, &rec.RelativePath, &rec.Filename, &rec.MIMEType, &rec.Size,
-			&rec.Hash.Algorithm, &rec.Hash.Digest, &modified, &indexed, &available, &rec.Visibility); err != nil {
-			return nil, err
-		}
-		rec.Available = available == 1
-		rec.ModifiedAt, _ = time.Parse(time.RFC3339, modified)
-		rec.IndexedAt, _ = time.Parse(time.RFC3339, indexed)
-		out = append(out, rec)
-	}
-	return out, rows.Err()
+	return scanRows(rows)
 }
 
 func (s *Store) Summary(ctx context.Context) (Summary, error) {
@@ -246,4 +275,22 @@ func (s *Store) MarkDirMissing(ctx context.Context, rel string) error {
 	_, err := s.db.SQL().ExecContext(ctx, `UPDATE directories SET available = 0, indexed_at = ? WHERE relative_path = ?`,
 		time.Now().UTC().Format(time.RFC3339), rel)
 	return err
+}
+
+func scanRows(rows *sql.Rows) ([]Record, error) {
+	var out []Record
+	for rows.Next() {
+		var rec Record
+		var modified, indexed string
+		var available int
+		if err := rows.Scan(&rec.ID, &rec.RelativePath, &rec.Filename, &rec.MIMEType, &rec.Size,
+			&rec.Hash.Algorithm, &rec.Hash.Digest, &modified, &indexed, &available, &rec.Visibility); err != nil {
+			return nil, err
+		}
+		rec.Available = available == 1
+		rec.ModifiedAt, _ = time.Parse(time.RFC3339, modified)
+		rec.IndexedAt, _ = time.Parse(time.RFC3339, indexed)
+		out = append(out, rec)
+	}
+	return out, rows.Err()
 }

@@ -9,7 +9,7 @@ This repository is at **Phase 6**: a local desktop daemon plus a CGO-free `fedis
 ## What FediShare will do
 
 1. You choose a username and a shared folder.
-2. FediShare creates a local ActivityPub identity such as `@alice@nodes.example.org`.
+2. FediShare creates a local ActivityPub identity such as `@alice@fedishare.console.itagora.it`.
 3. Files in that folder are indexed and published as ActivityStreams objects.
 4. Remote Fediverse users can discover and follow the actor.
 5. Downloads are streamed from your disk over HTTP, through an optional rendezvous/gateway.
@@ -57,9 +57,9 @@ CGO_ENABLED=0 go build -o bin/fedishare-gateway ./cmd/fedishare-gateway
 To publish the gateway for Cloudron (linux/amd64 image on Docker Hub):
 
 ```bash
-docker build --platform linux/amd64 -t YOURUSER/fedishare-gateway:0.6.0 .
-docker push YOURUSER/fedishare-gateway:0.6.0
-cloudron install --image YOURUSER/fedishare-gateway:0.6.0 --location nodes
+docker build --platform linux/amd64 -t nuke86/fedishare-gateway:0.6.0 .
+docker push nuke86/fedishare-gateway:0.6.0
+cloudron install --image nuke86/fedishare-gateway:0.6.0 --location nodes
 ```
 
 See [docs/cloudron.md](docs/cloudron.md).
@@ -96,7 +96,7 @@ Useful flags:
   "display_name": "Alice",
   "summary": "",
   "share_directory": "/Users/alice/FediShare",
-  "gateway_url": "https://nodes.example.org",
+  "gateway_url": "https://fedishare.console.itagora.it",
   "local_port": 17890,
   "max_concurrent_downloads": 8,
   "bandwidth_limit_bps": 0,

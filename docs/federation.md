@@ -2,6 +2,8 @@
 
 FediShare speaks ActivityPub for identity and metadata only. File bytes never go through the inbox or outbox.
 
+Every Actor publishes a fixed Mastodon-style profile field (`attachment` PropertyValue) named `Fedishare` with value `https://github.com/insicd/fedishare`. The bio (`summary`) stays user-editable; that field does not.
+
 ## HTTP Signatures
 
 The MVP implements **draft-cavage-http-signatures** with `rsa-sha256`. This is what Mastodon, Pleroma, and Misskey expect today.

@@ -19,8 +19,9 @@ type Watcher struct {
 	idx *Indexer
 	log *slog.Logger
 
-	mu      sync.Mutex
-	pending map[string]*time.Timer
+	mu        sync.Mutex
+	pending   map[string]*time.Timer
+	scanTimer *time.Timer
 }
 
 func NewWatcher(idx *Indexer, log *slog.Logger) *Watcher {
@@ -69,7 +70,9 @@ func (w *Watcher) handle(ctx context.Context, fw *fsnotify.Watcher, ev fsnotify.
 	if ev.Has(fsnotify.Create) {
 		info, err := os.Lstat(name)
 		if err == nil && info.IsDir() && info.Mode()&os.ModeSymlink == 0 && !files.IsDotfile(info.Name()) {
-			_ = fw.Add(name)
+			_ = addTree(fw, name)
+			w.scheduleScan(ctx)
+			return
 		}
 	}
 	if ev.Has(fsnotify.Remove) || ev.Has(fsnotify.Rename) {
@@ -79,17 +82,26 @@ func (w *Watcher) handle(ctx context.Context, fw *fsnotify.Watcher, ev fsnotify.
 			delete(w.pending, name)
 		}
 		w.mu.Unlock()
-		go func() {
-			if err := w.idx.RemovePath(ctx, name); err != nil {
-				w.log.Debug("index remove", "err", err)
-			}
-			w.idx.PublishSummary(ctx)
-		}()
+		w.scheduleScan(ctx)
 		return
 	}
 	if ev.Has(fsnotify.Create) || ev.Has(fsnotify.Write) || ev.Has(fsnotify.Chmod) {
 		w.schedule(ctx, name)
 	}
+}
+
+func (w *Watcher) scheduleScan(ctx context.Context) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.scanTimer != nil {
+		w.scanTimer.Stop()
+	}
+	w.scanTimer = time.AfterFunc(debounce, func() {
+		if err := w.idx.Scan(ctx); err != nil && ctx.Err() == nil {
+			w.log.Debug("index rescan", "err", err)
+		}
+		w.idx.PublishSummary(ctx)
+	})
 }
 
 func (w *Watcher) schedule(ctx context.Context, name string) {
@@ -125,6 +137,10 @@ func (w *Watcher) flushCancel() {
 		t.Stop()
 	}
 	w.pending = make(map[string]*time.Timer)
+	if w.scanTimer != nil {
+		w.scanTimer.Stop()
+		w.scanTimer = nil
+	}
 }
 
 func addTree(fw *fsnotify.Watcher, root string) error {

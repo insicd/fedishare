@@ -16,6 +16,9 @@ func TestDefaultAndConfigured(t *testing.T) {
 	if cfg.LocalPort != DefaultLocalPort {
 		t.Fatalf("port = %d", cfg.LocalPort)
 	}
+	if cfg.GatewayURL != DefaultGatewayURL {
+		t.Fatalf("gateway = %q", cfg.GatewayURL)
+	}
 	cfg.Username = "alice"
 	cfg.ShareDirectory = "/tmp/share"
 	if !cfg.Configured() {
@@ -153,8 +156,12 @@ func TestFediverseAddress(t *testing.T) {
 		t.Fatal("empty username")
 	}
 	cfg.Username = "alice"
-	if cfg.FediverseAddress() != "@alice" {
+	if cfg.FediverseAddress() != "@alice@fedishare.console.itagora.it" {
 		t.Fatalf("got %q", cfg.FediverseAddress())
+	}
+	cfg.GatewayURL = ""
+	if cfg.FediverseAddress() != "@alice" {
+		t.Fatalf("empty gateway got %q", cfg.FediverseAddress())
 	}
 	cfg.GatewayURL = "https://nodes.example.org"
 	if cfg.FediverseAddress() != "@alice@nodes.example.org" {

@@ -171,14 +171,19 @@ func (idx *Indexer) Scan(ctx context.Context) error {
 		return err
 	}
 	for rel, rec := range known {
-		if _, ok := seenFiles[rel]; !ok {
-			if err := idx.store.MarkMissing(ctx, rel); err != nil {
-				return err
-			}
-			if rec.Available {
-				rec.Available = false
-				idx.emit(ctx, ChangeDelete, rec)
-			}
+		if _, ok := seenFiles[rel]; ok {
+			continue
+		}
+		current, err := idx.store.GetByID(ctx, rec.ID)
+		if err == nil && current.Available && current.RelativePath != rel {
+			continue
+		}
+		if err := idx.store.MarkMissing(ctx, rel); err != nil {
+			return err
+		}
+		if rec.Available {
+			rec.Available = false
+			idx.emit(ctx, ChangeDelete, rec)
 		}
 	}
 	idx.setProgress(total, total)
@@ -230,8 +235,19 @@ func (idx *Indexer) indexFileLocked(ctx context.Context, root, rel, abs string) 
 	if err != nil {
 		return err
 	}
-	old, _ := idx.store.GetByPath(ctx, rel)
+	prev, _ := idx.store.GetByPath(ctx, rel)
+	if cand, ok := idx.moveCandidate(ctx, root, rel, sum); ok {
+		if prev.ID != "" && prev.ID != cand.ID {
+			_ = idx.store.DeleteByID(ctx, prev.ID)
+		}
+		prev = cand
+	}
+	vis := files.VisibilityPublic
+	if prev.Visibility != "" {
+		vis = prev.Visibility
+	}
 	rec := files.Record{
+		ID:           prev.ID,
 		RelativePath: rel,
 		Filename:     filepath.Base(rel),
 		MIMEType:     files.DetectMIME(resolved),
@@ -239,21 +255,66 @@ func (idx *Indexer) indexFileLocked(ctx context.Context, root, rel, abs string) 
 		Hash:         sum,
 		ModifiedAt:   info.ModTime().UTC(),
 		Available:    true,
-		Visibility:   files.VisibilityPublic,
+		Visibility:   vis,
 	}
-	saved, err := idx.store.Upsert(ctx, rec)
+	var saved files.Record
+	if rec.ID != "" {
+		saved, err = idx.store.Save(ctx, rec)
+	} else {
+		saved, err = idx.store.Upsert(ctx, rec)
+	}
 	if err != nil {
 		return err
 	}
+	if prev.ID != "" && prev.Available && prev.Hash == saved.Hash && prev.Size == saved.Size && prev.RelativePath == saved.RelativePath {
+		return nil
+	}
 	kind := ChangeCreate
-	if old.ID != "" && old.Available {
-		if old.Hash == saved.Hash && old.Size == saved.Size {
-			return nil
-		}
+	if prev.ID != "" {
 		kind = ChangeUpdate
 	}
 	idx.emit(ctx, kind, saved)
 	return nil
+}
+
+func (idx *Indexer) moveCandidate(ctx context.Context, root, rel string, sum files.ContentID) (files.Record, bool) {
+	matches, err := idx.store.ListByHash(ctx, sum.Algorithm, sum.Digest)
+	if err != nil || len(matches) == 0 {
+		return files.Record{}, false
+	}
+	var samePath, missing, stale files.Record
+	for _, rec := range matches {
+		if rec.RelativePath == rel {
+			samePath = rec
+			continue
+		}
+		if !rec.Available {
+			if missing.ID == "" {
+				missing = rec
+			}
+			continue
+		}
+		abs, err := files.ResolveUnderRoot(root, rec.RelativePath)
+		if err != nil {
+			if stale.ID == "" {
+				stale = rec
+			}
+			continue
+		}
+		if _, err := os.Lstat(abs); err != nil && stale.ID == "" {
+			stale = rec
+		}
+	}
+	if missing.ID != "" {
+		return missing, true
+	}
+	if stale.ID != "" {
+		return stale, true
+	}
+	if samePath.ID != "" {
+		return samePath, true
+	}
+	return files.Record{}, false
 }
 
 func waitStable(path string) (os.FileInfo, error) {

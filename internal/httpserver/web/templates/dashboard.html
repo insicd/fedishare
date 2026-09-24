@@ -80,8 +80,12 @@
           <label>Display name <input name="display_name" value="{{.Config.DisplayName}}" maxlength="80"></label>
           <label>Username <input name="username" value="{{.Config.Username}}" maxlength="30"></label>
           <label>Shared folder <input name="share_directory" value="{{.Config.ShareDirectory}}"></label>
-          <label>Gateway URL <input name="gateway_url" value="{{.Config.GatewayURL}}"></label>
-          <label>Short bio <textarea name="summary" rows="3" maxlength="500">{{.Config.Summary}}</textarea></label>
+          <label>Gateway URL <input name="gateway_url" type="url" value="{{if .Config.GatewayURL}}{{.Config.GatewayURL}}{{else}}{{.DefaultGateway}}{{end}}" placeholder="{{.DefaultGateway}}">
+            <span class="hint">Official FediShare gateway. Change this only if you run your own.</span>
+          </label>
+          <label>Short bio <textarea name="summary" rows="3" maxlength="500">{{.Config.Summary}}</textarea>
+            <span class="hint">Every public profile also shows a fixed Fedishare link. It cannot be changed.</span>
+          </label>
           <label>Log level
             <select name="log_level">
               <option value="debug" {{if eq .Config.LogLevel "debug"}}selected{{end}}>debug</option>
