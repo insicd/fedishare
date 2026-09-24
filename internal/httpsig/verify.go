@@ -30,7 +30,7 @@ func VerifyRequestAt(r *http.Request, body []byte, lookup KeyFunc, now time.Time
 	if lookup == nil {
 		return Params{}, fmt.Errorf("missing key lookup")
 	}
-	p, err := Parse(r.Header.Get(HeaderName))
+	p, err := ParseRequest(r)
 	if err != nil {
 		return Params{}, err
 	}

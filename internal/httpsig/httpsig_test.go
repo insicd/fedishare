@@ -77,4 +77,36 @@ func TestVerifyRejectsBadSignatureAndStaleDate(t *testing.T) {
 	}
 }
 
+func TestSignGETAndVerify(t *testing.T) {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodGet, "https://mastodon.social/users/alice", nil)
+	req.Host = "mastodon.social"
+	if err := SignGET(req, "https://nodes.example.org/users/bob#main-key", key); err != nil {
+		t.Fatal(err)
+	}
+	if req.Header.Get("Digest") != "" {
+		t.Fatal("GET signatures must not include Digest")
+	}
+	_, err = VerifyRequest(req, nil, func(string) (*rsa.PublicKey, error) { return &key.PublicKey, nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestParseRequestSkipsRFC9421Sibling(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "http://example/inbox", nil)
+	req.Header.Add("Signature", `sig1=:YWJj:`)
+	req.Header.Add("Signature", `keyId="https://remote.example/users/bob#main-key",algorithm="rsa-sha256",headers="date",signature="abc"`)
+	p, err := ParseRequest(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.KeyID != "https://remote.example/users/bob#main-key" {
+		t.Fatalf("%+v", p)
+	}
+}
+
 func bytesReader(b []byte) io.Reader { return strings.NewReader(string(b)) }

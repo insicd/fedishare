@@ -14,7 +14,9 @@ Lemmy is different: it stores community `Page`/`Article` objects, and treats a b
 
 The MVP implements **draft-cavage-http-signatures** with `rsa-sha256`. This is what Mastodon, Pleroma, and Misskey expect today.
 
-RFC 9421 HTTP Message Signatures is **not** implemented.
+Outbound Actor GETs are signed the same way so instances that enable Mastodon **authorized fetch** / secure mode (including mastodon.social) return the public key instead of HTTP 401. Without that key a Follow cannot be verified and stays pending.
+
+RFC 9421 HTTP Message Signatures is **not** implemented. If a request sends both a Cavage `Signature` and an RFC 9421 `Signature`, the Cavage header is used.
 
 Signed POST requests include:
 

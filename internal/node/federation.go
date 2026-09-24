@@ -29,6 +29,8 @@ func (n *Node) startFederationLocked() {
 	allow := n.allowPrivateFederation()
 	store := federation.NewStore(n.db)
 	fetch := federation.NewFetcher(allow)
+	fetch.KeyID = func() string { return n.publicPaths().KeyID() }
+	fetch.Private = func() (*rsa.PrivateKey, error) { return n.keys.PrivateKey() }
 	n.fedStore = store
 	n.fedFetch = fetch
 	n.publisher = &federation.Publisher{

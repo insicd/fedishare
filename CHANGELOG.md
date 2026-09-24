@@ -16,6 +16,7 @@ All notable changes to FediShare are documented here.
 - Publish a fixed Actor profile field `Fedishare` → `https://github.com/insicd/fedishare` on every node; it is not user-editable.
 - Serve each file Note at a dereferenceable `/users/{username}/notes/{id}` (no `#object` fragment), address followers in `cc`, and emit HTML `content` so Friendica and WAFRN can refetch and render posts. Lemmy still will not list these Notes as community posts.
 - Serve a public FediShare HTML profile (and per-file note page) when a browser sends `Accept: text/html`; ActivityPub clients still receive JSON. The gateway caches only Actor JSON so an HTML visit cannot poison federation.
+- Sign outbound Actor GETs (authorized fetch) so Follows from instances such as mastodon.social can be verified and accepted.
 
 ## 0.5.0-dev — Phase 5
 

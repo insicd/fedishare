@@ -46,7 +46,11 @@ func (in *Inbox) Process(ctx context.Context, r *http.Request, body []byte) erro
 		return pub, nil
 	})
 	if err != nil {
-		in.Log.Info("inbox signature rejected", "err", err, "host", security.HostOnly("https://"+r.Host))
+		in.Log.Info("inbox signature rejected",
+			"err", err,
+			"host", security.HostOnly("https://"+r.Host),
+			"ua", r.Header.Get("User-Agent"),
+		)
 		return ErrUnauthorized
 	}
 

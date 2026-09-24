@@ -4,6 +4,7 @@ package httpsig
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 )
 
@@ -13,6 +14,49 @@ type Params struct {
 	Algorithm string
 	Headers   []string
 	Signature string
+}
+
+// ParseRequest reads draft-cavage Signature headers. If the request also
+// carries an RFC 9421 Signature, that value is skipped so a Cavage header
+// on the same request still verifies.
+func ParseRequest(r *http.Request) (Params, error) {
+	if r == nil {
+		return Params{}, fmt.Errorf("missing Signature header")
+	}
+	vals := r.Header.Values(HeaderName)
+	if len(vals) == 0 {
+		if raw := r.Header.Get(HeaderName); raw != "" {
+			vals = []string{raw}
+		}
+	}
+	var last error
+	for _, raw := range vals {
+		if looksLikeRFC9421(raw) {
+			last = fmt.Errorf("RFC 9421 Signature is not supported yet")
+			continue
+		}
+		p, err := Parse(raw)
+		if err == nil {
+			return p, nil
+		}
+		last = err
+	}
+	if last != nil {
+		return Params{}, last
+	}
+	return Params{}, fmt.Errorf("missing Signature header")
+}
+
+func looksLikeRFC9421(header string) bool {
+	s := strings.TrimSpace(header)
+	if s == "" {
+		return false
+	}
+	lower := strings.ToLower(s)
+	if strings.Contains(lower, "keyid=") {
+		return false
+	}
+	return strings.Contains(s, "=:") || strings.Contains(lower, "sig1=")
 }
 
 func Parse(header string) (Params, error) {

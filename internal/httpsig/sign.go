@@ -20,6 +20,9 @@ const (
 // DefaultHeaders are the headers Mastodon expects on signed POSTs.
 var DefaultHeaders = []string{"(request-target)", "host", "date", "digest"}
 
+// GetHeaders are the headers Mastodon authorized-fetch expects on signed GETs.
+var GetHeaders = []string{"(request-target)", "host", "date"}
+
 // SignRequest adds Date, Digest, Host, and Signature on req.
 // body must be the exact bytes that will be sent.
 func SignRequest(req *http.Request, keyID string, key *rsa.PrivateKey, body []byte) error {
@@ -52,6 +55,38 @@ func SignRequest(req *http.Request, keyID string, key *rsa.PrivateKey, body []by
 		Signature: base64.StdEncoding.EncodeToString(sig),
 	}
 	req.Header.Set(HeaderName, p.Header())
+	return nil
+}
+
+// SignGET signs an outbound GET for Mastodon/GoToSocial authorized fetch.
+func SignGET(req *http.Request, keyID string, key *rsa.PrivateKey) error {
+	if req == nil || key == nil || keyID == "" {
+		return fmt.Errorf("missing signing material")
+	}
+	if req.Header.Get("Date") == "" {
+		req.Header.Set("Date", time.Now().UTC().Format(http.TimeFormat))
+	}
+	if req.Host == "" && req.URL != nil {
+		req.Host = req.URL.Host
+	}
+	if req.Header.Get("Host") == "" && req.Host != "" {
+		req.Header.Set("Host", req.Host)
+	}
+	signing, err := SigningString(req, GetHeaders)
+	if err != nil {
+		return err
+	}
+	sum := sha256.Sum256([]byte(signing))
+	sig, err := rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA256, sum[:])
+	if err != nil {
+		return fmt.Errorf("sign: %w", err)
+	}
+	req.Header.Set(HeaderName, Params{
+		KeyID:     keyID,
+		Algorithm: "rsa-sha256",
+		Headers:   GetHeaders,
+		Signature: base64.StdEncoding.EncodeToString(sig),
+	}.Header())
 	return nil
 }
 

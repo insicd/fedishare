@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/fedishare/fedishare/internal/crypto"
+	"github.com/fedishare/fedishare/internal/httpsig"
 	"github.com/fedishare/fedishare/internal/security"
+	"github.com/fedishare/fedishare/internal/version"
 )
 
 type keyEntry struct {
@@ -22,8 +24,10 @@ type keyEntry struct {
 
 // Fetcher retrieves remote Actors with SSRF protections.
 type Fetcher struct {
-	Client *http.Client
-	Policy security.Policy
+	Client  *http.Client
+	Policy  security.Policy
+	KeyID   func() string
+	Private func() (*rsa.PrivateKey, error)
 
 	mu    sync.Mutex
 	cache map[string]keyEntry
@@ -47,6 +51,10 @@ func (f *Fetcher) FetchActor(ctx context.Context, actorURL string) (RemoteActor,
 		return RemoteActor{}, err
 	}
 	req.Header.Set("Accept", "application/activity+json, application/ld+json")
+	req.Header.Set("User-Agent", "FediShare/"+version.Version)
+	if err := f.signGET(req); err != nil {
+		return RemoteActor{}, err
+	}
 	res, err := f.Client.Do(req)
 	if err != nil {
 		return RemoteActor{}, err
@@ -97,6 +105,21 @@ func (f *Fetcher) FetchActor(ctx context.Context, actorURL string) (RemoteActor,
 		}
 	}
 	return actor, nil
+}
+
+func (f *Fetcher) signGET(req *http.Request) error {
+	if f == nil || f.Private == nil || f.KeyID == nil {
+		return nil
+	}
+	keyID := strings.TrimSpace(f.KeyID())
+	if keyID == "" {
+		return nil
+	}
+	priv, err := f.Private()
+	if err != nil {
+		return err
+	}
+	return httpsig.SignGET(req, keyID, priv)
 }
 
 func (f *Fetcher) PublicKey(ctx context.Context, keyID string) (*rsa.PublicKey, RemoteActor, error) {
