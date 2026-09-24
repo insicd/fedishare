@@ -195,6 +195,17 @@ func TestOutboxPagesAndFileObject(t *testing.T) {
 		t.Fatalf("doc=%s", fileRec.Body.String())
 	}
 
+	noteReq := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:17890/users/alice/notes/aabbccddeeff00112233445566778899", nil)
+	noteReq.Host = "127.0.0.1:17890"
+	noteRec := httptest.NewRecorder()
+	h.ServeHTTP(noteRec, noteReq)
+	if noteRec.Code != 200 {
+		t.Fatal(noteRec.Body.String())
+	}
+	if !strings.Contains(noteRec.Body.String(), `"type":"Note"`) || strings.Contains(noteRec.Body.String(), `"type":"Create"`) {
+		t.Fatalf("note=%s", noteRec.Body.String())
+	}
+
 	empty := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:17890/users/alice/followers", nil)
 	empty.Host = "127.0.0.1:17890"
 	emptyRec := httptest.NewRecorder()

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  {{template "styles" .}}
+</head>
+<body>
+  <main class="wrap">
+    <p class="brand">FediShare</p>
+    <p class="acct"><a href="{{.ProfileURL}}">← {{.DisplayName}}</a></p>
+    <h1>{{.Name}}</h1>
+    <p class="meta">{{.MIME}} · {{.Size}}</p>
+    <div class="actions">
+      <a class="btn" href="{{.DownloadURL}}">Download</a>
+    </div>
+    <p class="hint">The file is streamed from the owner’s computer. The link works only while their FediShare node is online.</p>
+    <footer>FediShare {{.Version}}</footer>
+  </main>
+</body>
+</html>

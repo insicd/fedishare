@@ -33,6 +33,7 @@ func Mount(mux *http.ServeMux, src Source) {
 	mux.HandleFunc("GET /users/{username}/inbox", h.Inbox)
 	mux.HandleFunc("POST /users/{username}/inbox", h.InboxPOST)
 	mux.HandleFunc("GET /users/{username}/files/{id}", h.FileObject)
+	mux.HandleFunc("GET /users/{username}/notes/{id}", h.Note)
 	mux.HandleFunc("GET /users/{username}/activities/{id}", h.Activity)
 }
 
@@ -82,6 +83,10 @@ func (h *Handler) WebFinger(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Actor(w http.ResponseWriter, r *http.Request) {
 	if !matchUser(h.src, r.PathValue("username")) {
 		http.NotFound(w, r)
+		return
+	}
+	if WantsHTML(r) {
+		h.writeProfile(w, r)
 		return
 	}
 	pem, err := h.src.PublicKeyPEM()
@@ -256,6 +261,18 @@ func (h *Handler) FileObject(w http.ResponseWriter, r *http.Request) {
 	writeActivity(w, http.StatusOK, activitystreams.Document(
 		paths.File(rec.ID), rec.Filename, rec.MIMEType, paths.Download(rec.ID), rec,
 	))
+}
+
+func (h *Handler) Note(w http.ResponseWriter, r *http.Request) {
+	rec, ok := h.publicFile(w, r)
+	if !ok {
+		return
+	}
+	if WantsHTML(r) {
+		h.writeNotePage(w, rec)
+		return
+	}
+	writeActivity(w, http.StatusOK, activitystreams.FileNote(h.paths(), rec))
 }
 
 func (h *Handler) Activity(w http.ResponseWriter, r *http.Request) {

@@ -15,7 +15,7 @@ cmd/fedishare                    cmd/fedishare-gateway
             └── tunnel.Client  ──────────►  outbound reverse tunnel
 ```
 
-ActivityPub object `id` values use `gateway_url` (for example `https://nodes.example.org/users/alice`). The desktop still binds the admin UI to loopback. Public discovery and downloads reach the node through the gateway tunnel.
+ActivityPub object `id` values use `gateway_url` (for example `https://nodes.example.org/users/alice`). The desktop still binds the admin UI to loopback. Public discovery and downloads reach the node through the gateway tunnel. The same actor and note URLs negotiate `Accept`: browsers get a public HTML profile; federation clients get JSON.
 
 The gateway never stores private keys or file bytes. Local indexing works with `gateway_url` empty; the node then stays Offline and serves Actor/WebFinger only on loopback.
 

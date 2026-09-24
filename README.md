@@ -114,11 +114,14 @@ GET /.well-known/webfinger?resource=acct:alice@nodes.example.org
 GET /users/alice
 GET /users/alice/outbox
 GET /users/alice/outbox?page=1
+GET /users/alice/notes/{id}
 GET /users/alice/files/{id}
 GET /users/alice/download/{id}
 ```
 
 JSON `id` fields use `gateway_url` when it is set. The desktop node dials that origin, upgrades to `fedishare-tunnel`, and signs a one-time challenge. See [docs/gateway.md](docs/gateway.md).
+
+A browser that opens `/users/{username}` or `/users/{username}/notes/{id}` (with `Accept: text/html`) gets a FediShare HTML page. Fediverse servers that ask for `application/activity+json` still receive the ActivityPub document.
 
 Inbox:
 

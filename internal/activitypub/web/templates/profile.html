@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  {{template "styles" .}}
+</head>
+<body>
+  <main class="wrap">
+    <p class="brand">FediShare</p>
+    <h1>{{.DisplayName}}</h1>
+    <p class="acct">{{.Acct}}</p>
+    {{if .Summary}}
+    <section class="card">
+      <p class="bio">{{.Summary}}</p>
+    </section>
+    {{end}}
+    <section class="card">
+      <dl class="field">
+        <dt>{{.BrandName}}</dt>
+        <dd><a href="{{.BrandURL}}" rel="me nofollow noopener noreferrer">{{.BrandURL}}</a></dd>
+      </dl>
+    </section>
+    {{if .Offline}}
+    <section class="card offline">
+      <p class="bio">This node is offline. Shared files are listed only while the desktop app is running.</p>
+    </section>
+    {{else}}
+    <section class="card">
+      <h2>Shared files</h2>
+      {{if .Files}}
+      <ul class="files">
+        {{range .Files}}
+        <li>
+          <div>
+            <a class="name" href="{{.NoteURL}}">{{.Name}}</a>
+            <p class="meta">{{.MIME}} · {{.Size}}</p>
+          </div>
+          <a class="btn" href="{{.DownloadURL}}">Download</a>
+        </li>
+        {{end}}
+      </ul>
+      {{if gt .TotalFiles (len .Files)}}
+      <p class="hint">Showing {{len .Files}} of {{.TotalFiles}} files.</p>
+      {{end}}
+      {{else}}
+      <p class="hint">No public files yet.</p>
+      {{end}}
+    </section>
+    {{end}}
+    <footer>FediShare {{.Version}} — files stay on the owner’s computer.</footer>
+  </main>
+</body>
+</html>

@@ -63,10 +63,13 @@ func TestFileCreateNoteAndDocument(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := string(raw)
-	for _, need := range []string{"Note", "Document", "manuale-amiga.pdf", "Download:", "fedishare:hash", PublicAudience} {
+	for _, need := range []string{"Note", "Document", "manuale-amiga.pdf", "Download:", "fedishare:hash", PublicAudience, "/notes/", "/followers", "text/html"} {
 		if !strings.Contains(s, need) {
 			t.Fatalf("missing %q in %s", need, s)
 		}
+	}
+	if strings.Contains(s, "#object") {
+		t.Fatalf("fragment note id is not dereferenceable: %s", s)
 	}
 	if strings.Count(s, `"@context"`) != 1 {
 		t.Fatalf("nested @context leaked: %s", s)

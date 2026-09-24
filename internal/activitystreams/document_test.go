@@ -37,7 +37,11 @@ func TestDocumentSerialization(t *testing.T) {
 		t.Fatalf("missing hash extension: %s", raw)
 	}
 	note := NoteContent(rec.Filename, "application/pdf", rec.Size, "https://example/dl")
-	if !strings.Contains(note, "manuale-amiga.pdf") || !strings.Contains(note, "Download:") {
+	if !strings.Contains(note, "manuale-amiga.pdf") || !strings.Contains(note, `<a href="https://example/dl"`) {
 		t.Fatalf("note=%s", note)
+	}
+	plain := NoteContentPlain(rec.Filename, "application/pdf", rec.Size, "https://example/dl")
+	if !strings.Contains(plain, "Download:") {
+		t.Fatalf("plain=%s", plain)
 	}
 }

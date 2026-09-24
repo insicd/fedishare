@@ -28,7 +28,7 @@ func (p Paths) Following() string { return p.Actor() + "/following" }
 func (p Paths) File(id string) string     { return p.Actor() + "/files/" + id }
 func (p Paths) Download(id string) string { return p.Actor() + "/download/" + id }
 func (p Paths) Activity(id string) string { return p.Actor() + "/activities/" + id }
+func (p Paths) Note(id string) string     { return p.Actor() + "/notes/" + id }
 func (p Paths) OutboxPage(n int) string   { return fmt.Sprintf("%s?page=%d", p.Outbox(), n) }
 func (p Paths) KeyID() string             { return p.Actor() + "#main-key" }
 func (p Paths) Acct(host string) string   { return "acct:" + p.Username + "@" + host }
-func (p Paths) Note(id string) string     { return p.Activity(id) + "#object" }

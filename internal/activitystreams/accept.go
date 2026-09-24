@@ -42,6 +42,7 @@ func FileDelete(paths Paths, rec files.Record, activityID string) map[string]any
 		"actor":     paths.Actor(),
 		"published": time.Now().UTC().Format(time.RFC3339),
 		"to":        []string{PublicAudience},
+		"cc":        []string{paths.Followers()},
 		"object": map[string]any{
 			"id":         paths.Note(rec.ID),
 			"type":       "Tombstone",

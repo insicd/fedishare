@@ -101,6 +101,16 @@ func TestLiveActorWebFingerOutbox(t *testing.T) {
 		t.Fatalf("outbox missing file: %s", outBody)
 	}
 
+	note, err := client.Get(base + "/users/alice/notes/" + list[0].ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer note.Body.Close()
+	noteBody, _ := io.ReadAll(note.Body)
+	if note.StatusCode != 200 || !strings.Contains(string(noteBody), `"type":"Note"`) || !strings.Contains(string(noteBody), "/followers") {
+		t.Fatalf("note %d %s", note.StatusCode, noteBody)
+	}
+
 	doc, err := client.Get(base + "/users/alice/files/" + list[0].ID)
 	if err != nil {
 		t.Fatal(err)

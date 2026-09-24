@@ -19,6 +19,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fedishare/fedishare/internal/activitypub"
 	"github.com/fedishare/fedishare/internal/crypto"
 	"github.com/fedishare/fedishare/internal/tunnel"
 	"github.com/fedishare/fedishare/internal/version"
@@ -208,10 +209,11 @@ func (s *Server) public(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if cap != nil && cap.code == http.StatusOK && cap.buf.Len() > 0 {
+			ctype := strings.ToLower(cap.Header().Get("Content-Type"))
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			if kind == kindActor {
+			if kind == kindActor && strings.Contains(ctype, "application/activity+json") {
 				_ = s.Store.SaveActor(ctx, username, cap.buf.String())
-			} else {
+			} else if kind == kindWebFinger && strings.Contains(ctype, "jrd+json") {
 				_ = s.Store.SaveWebFinger(ctx, username, cap.buf.String())
 			}
 			cancel()
@@ -229,6 +231,16 @@ func (s *Server) offline(w http.ResponseWriter, r *http.Request, username string
 		switch kind {
 		case kindActor:
 			if row.ActorJSON != "" && (r.Method == http.MethodGet || r.Method == http.MethodHead) {
+				if activitypub.WantsHTML(r) {
+					if r.Method == http.MethodHead {
+						w.Header().Set("Content-Type", "text/html; charset=utf-8")
+						w.Header().Set("Vary", "Accept")
+						w.WriteHeader(http.StatusOK)
+						return
+					}
+					activitypub.WriteOfflineProfileHTML(w, row.ActorJSON)
+					return
+				}
 				w.Header().Set("Content-Type", "application/activity+json; charset=utf-8")
 				w.WriteHeader(http.StatusOK)
 				if r.Method != http.MethodHead {
@@ -247,8 +259,12 @@ func (s *Server) offline(w http.ResponseWriter, r *http.Request, username string
 			}
 		}
 	}
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Retry-After", "30")
+	if activitypub.WantsHTML(r) {
+		activitypub.WriteUnavailableHTML(w, http.StatusServiceUnavailable, "The FediShare node is offline.")
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	http.Error(w, "The FediShare node is offline.", http.StatusServiceUnavailable)
 }
 

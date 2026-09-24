@@ -123,6 +123,24 @@ func TestGatewayTunnelActorDownloadAndOfflineCache(t *testing.T) {
 		t.Fatalf("actor=%v", person)
 	}
 
+	htmlReq, err := http.NewRequest(http.MethodGet, gwURL+"/users/alice", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	htmlReq.Header.Set("Accept", "text/html")
+	htmlRes, err := client.Do(htmlReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	htmlBody, _ := io.ReadAll(htmlRes.Body)
+	htmlRes.Body.Close()
+	if htmlRes.StatusCode != 200 || !strings.Contains(htmlRes.Header.Get("Content-Type"), "text/html") {
+		t.Fatalf("html actor %s %s", htmlRes.Status, htmlBody)
+	}
+	if !strings.Contains(string(htmlBody), "Alice") || !strings.Contains(string(htmlBody), "note.txt") {
+		t.Fatalf("html profile=%s", htmlBody)
+	}
+
 	dl, err := client.Get(gwURL + "/users/alice/download/" + files[0].ID)
 	if err != nil {
 		t.Fatal(err)
@@ -169,6 +187,28 @@ func TestGatewayTunnelActorDownloadAndOfflineCache(t *testing.T) {
 	if cached.StatusCode != 200 {
 		body, _ := io.ReadAll(cached.Body)
 		t.Fatalf("cached actor %s %s", cached.Status, body)
+	}
+	var cachedPerson map[string]any
+	if err := json.NewDecoder(cached.Body).Decode(&cachedPerson); err != nil {
+		t.Fatal(err)
+	}
+	if cachedPerson["preferredUsername"] != "alice" {
+		t.Fatalf("html visit must not replace actor cache: %v", cachedPerson)
+	}
+
+	offHTML, err := http.NewRequest(http.MethodGet, gwURL+"/users/alice", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	offHTML.Header.Set("Accept", "text/html")
+	offRes, err := client.Do(offHTML)
+	if err != nil {
+		t.Fatal(err)
+	}
+	offBody, _ := io.ReadAll(offRes.Body)
+	offRes.Body.Close()
+	if offRes.StatusCode != 200 || !strings.Contains(string(offBody), "Alice") || !strings.Contains(string(offBody), "offline") {
+		t.Fatalf("offline html %s %s", offRes.Status, offBody)
 	}
 	cachedWF, err := client.Get(gwURL + "/.well-known/webfinger?resource=acct:alice@" + ln.Addr().String())
 	if err != nil {

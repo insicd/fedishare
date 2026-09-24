@@ -2,6 +2,7 @@ package activitystreams
 
 import (
 	"fmt"
+	"html"
 
 	"github.com/fedishare/fedishare/internal/files"
 )
@@ -58,12 +59,32 @@ func documentFields(id, name, mediaType, downloadURL string, rec files.Record) m
 	return doc
 }
 
-// NoteContent is the human-readable Create body for Mastodon-compatible clients.
+// NoteContent is HTML. ActivityStreams content is HTML by default; Friendica
+// and WAFRN drop or hide plain-text Notes that Mastodon still renders.
 func NoteContent(name, mediaType string, size int64, downloadURL string) string {
 	if mediaType == "" {
 		mediaType = "file"
 	}
+	safeName := html.EscapeString(name)
+	safeType := html.EscapeString(mediaType)
+	safeURL := html.EscapeString(downloadURL)
+	return fmt.Sprintf(
+		`<p>📄 %s<br>%s · %s</p><p>Download:<br><a href="%s" rel="nofollow noopener noreferrer">%s</a></p>`,
+		safeName, safeType, formatSize(size), safeURL, safeURL,
+	)
+}
+
+// NoteContentPlain is the text/plain source next to the HTML content.
+func NoteContentPlain(name, mediaType string, size int64, downloadURL string) string {
+	if mediaType == "" {
+		mediaType = "file"
+	}
 	return fmt.Sprintf("📄 %s\n%s · %s\n\nDownload:\n%s", name, mediaType, formatSize(size), downloadURL)
+}
+
+// FormatSize is the human-readable size used on Notes and the public HTML pages.
+func FormatSize(n int64) string {
+	return formatSize(n)
 }
 
 func formatSize(n int64) string {
