@@ -19,6 +19,8 @@ All notable changes to FediShare are documented here.
 - Sign outbound Actor GETs (authorized fetch) so Follows from instances such as mastodon.social can be verified and accepted.
 - Allow several local profiles in one desktop process: each actor has its own folder and keys, all share the same gateway and stay online together.
 - Open the system folder picker (Browse…) when choosing a share directory, so the path does not have to be typed.
+- Add a desktop **FediShare network** page: list actors on the same gateway (`GET /.well-known/fedishare-network`) and look up another gateway URL or `@user@host`. There is no global Fediverse directory.
+- When a node is offline, browsers get a real HTML page (“this profile is not reachable”) instead of raw markup or a proxy-intercepted 503.
 
 ## 0.5.0-dev — Phase 5
 

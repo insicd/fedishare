@@ -6,7 +6,7 @@ Every Actor publishes two fixed Mastodon-style profile fields (`attachment` Prop
 
 Public file posts are `Create`/`Update`/`Delete` of a `Note` with a `Document` attachment. The Note id is a dereferenceable HTTP URL (`/users/{username}/notes/{id}`), `content` is HTML, and both the activity and the Note address `as:Public` in `to` plus the local followers collection in `cc`. That matches what Mastodon, Friendica, and WAFRN expect when they refetch the object.
 
-Browsers that open the actor or note URL with `Accept: text/html` receive a FediShare HTML page (bio, My Web and Fedishare fields, file list or download). Requests that prefer `application/activity+json` still get the ActivityPub document. The gateway stores only the JSON Actor in its offline cache.
+Browsers that open the actor or note URL with `Accept: text/html` receive a FediShare HTML page (bio, My Web and Fedishare fields, file list or download). Requests that prefer `application/activity+json` still get the ActivityPub document. The gateway stores only the JSON Actor in its offline cache. If the desktop node is disconnected, browsers get a `text/html` “not reachable” page (HTTP 200, so proxies do not replace a 503 body); federation clients still receive the cached Actor JSON or 503 for downloads.
 
 Lemmy is different: it stores community `Page`/`Article` objects, and treats a bare `Note` as a comment that needs `inReplyTo` plus a community `audience`. Following a FediShare Person on Lemmy can show the profile without ever listing the file posts. FediShare does not post into Lemmy communities.
 
@@ -71,3 +71,5 @@ Two local `--data-dir` nodes on one machine, or tests, set `node.Options.AllowLo
 ## Reachability
 
 The desktop still binds the admin UI to `127.0.0.1`. Public WebFinger, Actor, inbox, and downloads are reverse-proxied by `fedishare-gateway` over the authenticated outbound tunnel. See [gateway.md](gateway.md).
+
+Same-gateway discovery uses `GET /.well-known/fedishare-network`. There is no worldwide index of FediShare (or Mastodon) actors: a handle or another gateway URL has to be looked up explicitly.

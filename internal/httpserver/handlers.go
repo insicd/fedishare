@@ -64,6 +64,24 @@ func (s *Server) page(tmpl *template.Template, _ string) http.HandlerFunc {
 	}
 }
 
+func (s *Server) getNetwork(w http.ResponseWriter, r *http.Request) {
+	n, ok := s.backend.(Network)
+	if !ok {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"type":   "FediShareNetwork",
+			"actors": []any{},
+			"hint":   "This desktop build cannot browse the FediShare network.",
+		})
+		return
+	}
+	dir, err := n.FetchNetwork(r.Context(), r.URL.Query().Get("q"))
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, dir)
+}
+
 func (s *Server) getStatus(w http.ResponseWriter, r *http.Request) {
 	cfg := s.backend.Config()
 	snap := s.backend.Status().Snapshot()

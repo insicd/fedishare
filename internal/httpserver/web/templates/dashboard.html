@@ -16,6 +16,7 @@
         <a href="#files">Shared files</a>
         <a href="#activity">Activity</a>
         <a href="#followers">Followers</a>
+        <a href="#network">FediShare network</a>
         <a href="#profiles">Profiles</a>
         <a href="#settings">Settings</a>
         <a href="#about">Logs / About</a>
@@ -73,6 +74,21 @@
             <tr><td colspan="3">Loading…</td></tr>
           </tbody>
         </table>
+      </section>
+
+      <section id="network">
+        <h2>FediShare network</h2>
+        <p class="hint">People registered on your gateway. Other gateways are not a global directory — ActivityPub has no worldwide user search. Paste another FediShare gateway URL, or an @user@host address, to look someone up.</p>
+        <form id="network-form" class="path-row">
+          <input name="q" placeholder="@alice@other-gateway.example or https://other-gateway.example" autocomplete="off">
+          <button type="submit">Look up</button>
+          <button type="button" class="secondary" data-action="network-home">This gateway</button>
+        </form>
+        <p class="hint" data-network-meta></p>
+        <p class="error" data-network-error hidden></p>
+        <ul class="profile-list" data-network-list>
+          <li><p class="hint">Loading…</p></li>
+        </ul>
       </section>
 
       <section id="profiles">

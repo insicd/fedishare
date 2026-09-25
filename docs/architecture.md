@@ -19,6 +19,8 @@ ActivityPub object `id` values use `gateway_url` (for example `https://nodes.exa
 
 The gateway never stores private keys or file bytes. Local indexing works with `gateway_url` empty; the node then stays Offline and serves Actor/WebFinger only on loopback.
 
+`GET /.well-known/fedishare-network` is the public actor list for one gateway. The desktop **FediShare network** page reads it over the configured `gateway_url`. Other gateways are looked up only when the user pastes a URL or `@user@host`; there is no global directory.
+
 On Cloudron the same binary runs from the published Docker image. The platform terminates TLS and mounts `/app/data`. See [cloudron.md](cloudron.md).
 
 Signing, Follow processing, and the delivery queue are documented in [federation.md](federation.md). The tunnel protocol is documented in [gateway.md](gateway.md).

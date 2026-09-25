@@ -47,6 +47,7 @@ function setNav() {
   if (hash === "#followers") refreshFollowers().catch(() => {});
   if (hash === "#about") refreshDiagnostics().catch(() => {});
   if (hash === "#profiles") refreshProfiles().catch(() => {});
+  if (hash === "#network") refreshNetwork().catch(() => {});
 }
 
 async function refreshProfiles() {
@@ -179,6 +180,48 @@ async function refreshFollowers() {
   }
 }
 
+let networkQuery = "";
+
+async function refreshNetwork(query) {
+  if (query !== undefined) networkQuery = query;
+  const list = document.querySelector("[data-network-list]");
+  const meta = document.querySelector("[data-network-meta]");
+  const errEl = document.querySelector("[data-network-error]");
+  if (!list) return;
+  if (errEl) errEl.hidden = true;
+  try {
+    const path = networkQuery ? "/api/network?q=" + encodeURIComponent(networkQuery) : "/api/network";
+    const data = await api(path);
+    if (meta) {
+      const parts = [];
+      if (data.gateway) parts.push("Showing " + data.gateway);
+      if (data.query) parts.push("lookup: " + data.query);
+      meta.textContent = parts.join(" · ");
+    }
+    const actors = data.actors || [];
+    if (!actors.length) {
+      list.innerHTML = `<li><p class="hint">${escapeHtml(data.hint || "Nobody is listed on this gateway yet.")}</p></li>`;
+      return;
+    }
+    list.innerHTML = actors.map((a) => {
+      const name = escapeHtml(a.name || a.username || a.acct || "Unknown");
+      const acct = escapeHtml(a.acct || "");
+      const url = escapeHtml(a.url || "");
+      const summary = a.summary ? `<p class="meta">${escapeHtml(a.summary)}</p>` : "";
+      const state = a.online ? `<span class="pill ok">Online</span>` : `<span class="pill off">Offline</span>`;
+      const link = url ? `<a class="name" href="${url}" target="_blank" rel="noopener noreferrer">${name}</a>` : `<span class="name">${name}</span>`;
+      return `<li><div>${link}<p class="meta">${acct}</p>${summary}</div>${state}</li>`;
+    }).join("");
+    if (data.hint && meta && !meta.textContent) meta.textContent = data.hint;
+  } catch (err) {
+    list.innerHTML = `<li><p class="hint">Could not load the network list.</p></li>`;
+    if (errEl) {
+      errEl.hidden = false;
+      errEl.textContent = err.message;
+    }
+  }
+}
+
 async function refreshDiagnostics() {
   const el = document.querySelector("[data-diagnostics]");
   if (!el) return;
@@ -221,6 +264,10 @@ function bindDashboard() {
         } else if (action === "copy-diag") {
           const data = await api("/api/diagnostics");
           await copyText(JSON.stringify(data, null, 2));
+        } else if (action === "network-home") {
+          const form = document.getElementById("network-form");
+          if (form) form.q.value = "";
+          await refreshNetwork("");
         }
       } catch (err) {
         alert(err.message);
@@ -240,6 +287,14 @@ function bindDashboard() {
       alert(err.message);
     }
   });
+
+  const networkForm = document.getElementById("network-form");
+  if (networkForm) {
+    networkForm.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      await refreshNetwork(new FormData(networkForm).get("q") || "");
+    });
+  }
 
   const profileForm = document.getElementById("profile-form");
   if (profileForm) {

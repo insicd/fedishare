@@ -9,6 +9,7 @@ import (
 	"github.com/fedishare/fedishare/internal/config"
 	"github.com/fedishare/fedishare/internal/federation"
 	"github.com/fedishare/fedishare/internal/files"
+	"github.com/fedishare/fedishare/internal/network"
 	"github.com/fedishare/fedishare/internal/status"
 )
 
@@ -30,6 +31,11 @@ type Backend interface {
 	FollowerList() ([]federation.Follower, error)
 	Block(ctx context.Context, target string) error
 	Unblock(ctx context.Context, target string) error
+}
+
+// Network is implemented by a node that can list other FediShare actors.
+type Network interface {
+	FetchNetwork(ctx context.Context, query string) (network.Directory, error)
 }
 
 // Profiles is implemented by a multi-actor desktop host.

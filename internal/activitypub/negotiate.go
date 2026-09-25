@@ -16,10 +16,13 @@ func WantsHTML(r *http.Request) bool {
 		return false
 	}
 	accept := strings.ToLower(r.Header.Get("Accept"))
-	if accept == "" {
+	if strings.Contains(accept, "application/activity+json") || strings.Contains(accept, "application/ld+json") {
 		return false
 	}
-	if strings.Contains(accept, "application/activity+json") || strings.Contains(accept, "application/ld+json") {
+	if strings.EqualFold(r.Header.Get("Sec-Fetch-Dest"), "document") {
+		return true
+	}
+	if accept == "" {
 		return false
 	}
 	return strings.Contains(accept, "text/html")

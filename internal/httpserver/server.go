@@ -55,6 +55,7 @@ func New(backend Backend, log *slog.Logger) (http.Handler, error) {
 	mux.HandleFunc("POST /api/profiles", s.postProfiles)
 	mux.HandleFunc("POST /api/profiles/select", s.postSelectProfile)
 	mux.HandleFunc("POST /api/browse-folder", s.postBrowseFolder)
+	mux.HandleFunc("GET /api/network", s.getNetwork)
 	if router, ok := backend.(PublicRouter); ok {
 		mountPublicRouter(mux, router)
 	} else {

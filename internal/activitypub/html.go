@@ -30,6 +30,7 @@ type ProfilePage struct {
 	Files       []FileLink
 	TotalFiles  int
 	Offline     bool
+	Unreachable bool
 	Version     string
 }
 
@@ -129,8 +130,41 @@ func fileLinks(paths activitystreams.Paths, recs []files.Record) []FileLink {
 // WriteOfflineProfileHTML renders a profile from a cached Actor JSON body
 // when the desktop node is not connected.
 func WriteOfflineProfileHTML(w http.ResponseWriter, actorJSON string) {
-	page := ProfilePageFromActorJSON(actorJSON)
-	page.Offline = true
+	WriteUnreachableHTML(w, actorJSON, unreachableMessage)
+}
+
+const unreachableMessage = "This profile is not reachable right now. The owner’s FediShare app is offline."
+
+// WriteUnreachableHTML is a browser page for an actor whose node is down.
+// It always sends text/html with HTTP 200 so reverse proxies do not replace
+// a 503 body with raw or plain-text HTML.
+func WriteUnreachableHTML(w http.ResponseWriter, actorJSON, message string) {
+	if strings.TrimSpace(message) == "" {
+		message = unreachableMessage
+	}
+	page := ProfilePage{
+		Title:       "Profile unavailable · FediShare",
+		DisplayName: "FediShare",
+		Summary:     message,
+		BrandName:   activitystreams.BrandFieldName,
+		BrandURL:    activitystreams.BrandFieldURL,
+		Offline:     true,
+		Unreachable: true,
+		Version:     version.Version,
+	}
+	if strings.TrimSpace(actorJSON) != "" {
+		from := ProfilePageFromActorJSON(actorJSON)
+		if from.DisplayName != "" {
+			page.DisplayName = from.DisplayName
+			page.Title = from.DisplayName + " · FediShare"
+		}
+		page.Acct = from.Acct
+		page.JSONURL = from.JSONURL
+		page.WebName = from.WebName
+		page.WebURL = from.WebURL
+		page.BrandName = from.BrandName
+		page.BrandURL = from.BrandURL
+	}
 	writePublicHTML(w, "profile.html", page)
 }
 
@@ -212,19 +246,6 @@ func writePublicHTML(w http.ResponseWriter, name string, data any) {
 
 // WriteUnavailableHTML is a short HTML page for public routes when the node
 // is offline and no Actor cache is available.
-func WriteUnavailableHTML(w http.ResponseWriter, code int, message string) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Set("Vary", "Accept")
-	w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; form-action 'none'; frame-ancestors 'none'")
-	w.WriteHeader(code)
-	page := ProfilePage{
-		Title:       "FediShare",
-		DisplayName: "FediShare",
-		Summary:     message,
-		BrandName:   activitystreams.BrandFieldName,
-		BrandURL:    activitystreams.BrandFieldURL,
-		Offline:     true,
-		Version:     version.Version,
-	}
-	_ = publicPages.ExecuteTemplate(w, "profile.html", page)
+func WriteUnavailableHTML(w http.ResponseWriter, _ int, message string) {
+	WriteUnreachableHTML(w, "", message)
 }

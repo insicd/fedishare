@@ -123,6 +123,28 @@ func TestGatewayTunnelActorDownloadAndOfflineCache(t *testing.T) {
 		t.Fatalf("actor=%v", person)
 	}
 
+	netRes, err := client.Get(gwURL + "/.well-known/fedishare-network")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer netRes.Body.Close()
+	if netRes.StatusCode != 200 {
+		body, _ := io.ReadAll(netRes.Body)
+		t.Fatalf("network %s %s", netRes.Status, body)
+	}
+	var dir map[string]any
+	if err := json.NewDecoder(netRes.Body).Decode(&dir); err != nil {
+		t.Fatal(err)
+	}
+	actors, _ := dir["actors"].([]any)
+	if dir["type"] != "FediShareNetwork" || len(actors) != 1 {
+		t.Fatalf("directory=%v", dir)
+	}
+	alice, _ := actors[0].(map[string]any)
+	if alice["username"] != "alice" || alice["online"] != true {
+		t.Fatalf("alice=%v", alice)
+	}
+
 	htmlReq, err := http.NewRequest(http.MethodGet, gwURL+"/users/alice", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -207,8 +229,11 @@ func TestGatewayTunnelActorDownloadAndOfflineCache(t *testing.T) {
 	}
 	offBody, _ := io.ReadAll(offRes.Body)
 	offRes.Body.Close()
-	if offRes.StatusCode != 200 || !strings.Contains(string(offBody), "Alice") || !strings.Contains(string(offBody), "offline") {
-		t.Fatalf("offline html %s %s", offRes.Status, offBody)
+	if offRes.StatusCode != 200 || !strings.Contains(offRes.Header.Get("Content-Type"), "text/html") {
+		t.Fatalf("offline html %s ctype=%s %s", offRes.Status, offRes.Header.Get("Content-Type"), offBody)
+	}
+	if !strings.Contains(string(offBody), "Alice") || !strings.Contains(string(offBody), "not reachable") {
+		t.Fatalf("offline html body %s", offBody)
 	}
 	cachedWF, err := client.Get(gwURL + "/.well-known/webfinger?resource=acct:alice@" + ln.Addr().String())
 	if err != nil {

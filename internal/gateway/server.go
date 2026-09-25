@@ -60,6 +60,7 @@ func New(store *Store, publicURL string, log *slog.Logger) *Server {
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", s.healthz)
+	mux.HandleFunc("GET /.well-known/fedishare-network", s.network)
 	mux.HandleFunc("GET /v1/tunnel", s.upgrade)
 	mux.HandleFunc("/", s.public)
 	return mux
@@ -227,20 +228,25 @@ func (s *Server) offline(w http.ResponseWriter, r *http.Request, username string
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
 	row, err := s.Store.Get(ctx, username)
+	if activitypub.WantsHTML(r) && (r.Method == http.MethodGet || r.Method == http.MethodHead) {
+		w.Header().Set("Retry-After", "30")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Vary", "Accept")
+		if r.Method == http.MethodHead {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		cached := ""
+		if err == nil {
+			cached = row.ActorJSON
+		}
+		activitypub.WriteUnreachableHTML(w, cached, "")
+		return
+	}
 	if err == nil {
 		switch kind {
 		case kindActor:
 			if row.ActorJSON != "" && (r.Method == http.MethodGet || r.Method == http.MethodHead) {
-				if activitypub.WantsHTML(r) {
-					if r.Method == http.MethodHead {
-						w.Header().Set("Content-Type", "text/html; charset=utf-8")
-						w.Header().Set("Vary", "Accept")
-						w.WriteHeader(http.StatusOK)
-						return
-					}
-					activitypub.WriteOfflineProfileHTML(w, row.ActorJSON)
-					return
-				}
 				w.Header().Set("Content-Type", "application/activity+json; charset=utf-8")
 				w.WriteHeader(http.StatusOK)
 				if r.Method != http.MethodHead {
@@ -260,10 +266,6 @@ func (s *Server) offline(w http.ResponseWriter, r *http.Request, username string
 		}
 	}
 	w.Header().Set("Retry-After", "30")
-	if activitypub.WantsHTML(r) {
-		activitypub.WriteUnavailableHTML(w, http.StatusServiceUnavailable, "The FediShare node is offline.")
-		return
-	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	http.Error(w, "The FediShare node is offline.", http.StatusServiceUnavailable)
 }

@@ -22,6 +22,11 @@ func TestWantsHTML(t *testing.T) {
 	if WantsHTML(empty) {
 		t.Fatal("missing accept should stay JSON")
 	}
+	nav := httptest.NewRequest(http.MethodGet, "/users/alice", nil)
+	nav.Header.Set("Sec-Fetch-Dest", "document")
+	if !WantsHTML(nav) {
+		t.Fatal("browser document navigation should want HTML")
+	}
 }
 
 func TestActorAndNoteHTML(t *testing.T) {

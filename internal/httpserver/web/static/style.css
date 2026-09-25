@@ -37,6 +37,7 @@ label { display: block; margin: 0.9rem 0; font-weight: 600; }
 .path-row { display: flex; gap: 0.5rem; align-items: flex-end; }
 .path-row input { flex: 1; min-width: 0; width: auto; }
 .path-row button { flex: 0 0 auto; margin-top: 0.35rem; white-space: nowrap; }
+form.path-row { margin: 1rem 0; }
 .hint, .optional, .message, .empty, .lede { color: var(--muted); font-weight: 400; }
 .optional { font-size: 0.85rem; }
 .error { color: var(--danger); }
@@ -65,6 +66,9 @@ th, td { text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid var
 .profile-list { list-style: none; margin: 0; padding: 0; }
 .profile-list li { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; padding: 0.7rem 0; border-bottom: 1px solid var(--line); }
 .profile-list .name { font-weight: 650; color: var(--ink); }
+.pill { display: inline-block; font-size: 0.8rem; font-weight: 650; padding: 0.15rem 0.5rem; border-radius: 999px; }
+.pill.ok { background: #d9efe4; color: var(--ok); }
+.pill.off { background: #ece6dc; color: var(--muted); }
 .check input { width: auto; margin-right: 0.5rem; }
 @media (max-width: 720px) {
   .shell { grid-template-columns: 1fr; }

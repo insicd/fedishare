@@ -117,6 +117,30 @@ func (s *Store) Register(ctx context.Context, username, publicKeyPEM, nodeID str
 	return err
 }
 
+func (s *Store) List(ctx context.Context, limit int) ([]ActorRow, error) {
+	if limit <= 0 || limit > 500 {
+		limit = 500
+	}
+	rows, err := s.sql.QueryContext(ctx, `
+		SELECT username, public_key_pem, COALESCE(node_id, ''), COALESCE(actor_json, ''), COALESCE(webfinger_json, '')
+		FROM actors
+		ORDER BY username
+		LIMIT ?`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []ActorRow
+	for rows.Next() {
+		var row ActorRow
+		if err := rows.Scan(&row.Username, &row.PublicKeyPEM, &row.NodeID, &row.ActorJSON, &row.WebFingerJSON); err != nil {
+			return nil, err
+		}
+		out = append(out, row)
+	}
+	return out, rows.Err()
+}
+
 func (s *Store) Get(ctx context.Context, username string) (ActorRow, error) {
 	username = strings.ToLower(strings.TrimSpace(username))
 	var row ActorRow

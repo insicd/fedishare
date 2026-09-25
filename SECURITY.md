@@ -22,6 +22,7 @@ The gateway listens on a public address. Treat it as an untrusted relay:
 - the first registered public key owns a username
 - tunnel auth is challenge-response with one-time nonces and a 2-minute `issued_at` window
 - only ActivityPub and `/users/{username}/download/{id}` are proxied; `/api` and the dashboard are not
+- `GET /.well-known/fedishare-network` publishes registered usernames and online state (public by design; no keys or file paths)
 - HTTP/2 is disabled on the gateway so the HTTP/1.1 Upgrade cannot be skipped
 - offline nodes return 503 for file content; Actor/WebFinger may be served from a small cache
 - the desktop reconnects with bounded backoff; a hostile gateway still cannot sign as the actor

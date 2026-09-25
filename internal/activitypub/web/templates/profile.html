@@ -11,6 +11,11 @@
     <p class="brand">FediShare</p>
     <h1>{{.DisplayName}}</h1>
     <p class="acct">{{.Acct}}</p>
+    {{if .Unreachable}}
+    <section class="card offline">
+      <p class="bio">{{.Summary}}</p>
+    </section>
+    {{else}}
     {{if .Summary}}
     <section class="card">
       <p class="bio">{{.Summary}}</p>
@@ -54,6 +59,7 @@
       <p class="hint">No public files yet.</p>
       {{end}}
     </section>
+    {{end}}
     {{end}}
     <footer>FediShare {{.Version}} — files stay on the owner’s computer.</footer>
   </main>

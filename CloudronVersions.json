@@ -41,6 +41,47 @@
         },
         "dockerImage": "nuke86/fedishare-gateway:0.6.0"
       }
+    },
+    "0.6.1": {
+      "creationDate": "Fri, 25 Sep 2026 00:00:00 GMT",
+      "ts": "Fri, 25 Sep 2026 00:00:00 GMT",
+      "publishState": "published",
+      "manifest": {
+        "id": "org.fedishare.gateway",
+        "title": "FediShare Gateway",
+        "tagline": "Stable ActivityPub address for FediShare desktop nodes",
+        "version": "0.6.1",
+        "manifestVersion": 2,
+        "minBoxVersion": "10.0.0",
+        "healthCheckPath": "/healthz",
+        "httpPort": 8000,
+        "addons": {
+          "localstorage": {}
+        },
+        "description": "FediShare Gateway gives desktop FediShare nodes a stable ActivityPub address.\n\nIt is a rendezvous service, not a file host. The container stores usernames, public keys, and a small Actor/WebFinger cache under `/app/data`. Private keys and shared files stay on the user's computer.\n\nAfter install, set `gateway_url` on the desktop app to this location's HTTPS origin.",
+        "changelog": "* Public FediShare network directory at /.well-known/fedishare-network\n* Offline browser visits get a text/html “not reachable” page instead of raw markup or a proxy-intercepted 503",
+        "website": "https://github.com/insicd/fedishare",
+        "packageUrl": "https://github.com/insicd/fedishare",
+        "documentationUrl": "https://github.com/insicd/fedishare/blob/main/docs/cloudron.md",
+        "packagerName": "FediShare",
+        "packagerUrl": "https://github.com/insicd/fedishare",
+        "iconUrl": "https://raw.githubusercontent.com/insicd/fedishare/main/assets/icon.png",
+        "mediaLinks": [
+          "https://raw.githubusercontent.com/insicd/fedishare/main/assets/icon.png"
+        ],
+        "tags": [
+          "activitypub",
+          "federation",
+          "filesharing"
+        ],
+        "postInstallMessage": "Set **gateway_url** on the FediShare desktop app to this location's HTTPS origin (no trailing slash). The private key never leaves the desktop.",
+        "checklist": {
+          "desktop-gateway-url": {
+            "message": "On the FediShare desktop app, set **gateway_url** to this location's HTTPS origin (the Cloudron domain). The private key never leaves the desktop."
+          }
+        },
+        "dockerImage": "nuke86/fedishare-gateway:0.6.1"
+      }
     }
   }
 }

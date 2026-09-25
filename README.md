@@ -24,7 +24,7 @@ This repository is at **Phase 6**: a local desktop daemon plus a CGO-free `fedis
 | SQLite + numbered migrations | Done |
 | Node start / graceful shutdown | Done |
 | Status state machine | Done |
-| System tray + local dashboard + wizard | Done |
+| System tray + local dashboard + wizard | Done — includes a FediShare network directory for the current gateway |
 | RSA identity keys (local only) | Done |
 | Pause / resume sharing | Done — pause returns 503 on new downloads |
 | File index, hashing, local `/files/{id}` | Done |

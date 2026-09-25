@@ -16,6 +16,8 @@ The desktop defaults `gateway_url` to `https://fedishare.console.itagora.it`. Op
 
 The first public key that registers a username wins. A later node that presents a different key for the same name is rejected.
 
+`GET /.well-known/fedishare-network` lists registered usernames (name, public URL, online if a tunnel is up). It is how the desktop **FediShare network** page finds people on the same gateway. Other gateways are not linked automatically: ActivityPub has no global user directory. A user can paste another gateway’s URL or an `@user@host` address. The document does not include public keys, private keys, or file bytes.
+
 ## Transport
 
 The desktop node opens an **outbound** HTTP/1.1 connection and upgrades it to `fedishare-tunnel`. The gateway never needs a port-forward on the user's machine.
@@ -55,6 +57,7 @@ The gateway reverse-proxies only:
 
 ```
 GET  /.well-known/webfinger
+GET  /.well-known/fedishare-network
 GET  /users/{username}
 GET  /users/{username}/outbox
 GET  /users/{username}/followers
