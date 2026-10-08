@@ -61,6 +61,7 @@ func (w *Watcher) Run(ctx context.Context) error {
 				return nil
 			}
 			w.log.Warn("filesystem watch", "err", err)
+			w.scheduleScan(ctx)
 		}
 	}
 }

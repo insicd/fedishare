@@ -99,7 +99,7 @@ Desktop SQLite has:
 | SQLite | `modernc.org/sqlite` (requires Go 1.25+) | Pure Go, no CGO, works in tests and on `fedishare-gateway` |
 | Logging | `log/slog` | Standard library |
 | Config | `encoding/json` | Standard library, human-readable |
-| FS watch | `fsnotify` | Recursive, debounced; hashing runs off the callback |
+| FS watch | `fsnotify` | Recursive, debounced; hashing runs off the callback; full rescan every 15 minutes as a safety net |
 | Tray | `fyne.io/systray` | Maintained fork, DBus on Linux, CGO |
 | Local UI | `net/http` + `html/template` | Loopback only |
 | Tunnel | HTTP/1.1 Upgrade + framed I/O | Standard library, outbound-only NAT traversal |

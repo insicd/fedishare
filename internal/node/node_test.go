@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/fedishare/fedishare/internal/apperr"
 	"github.com/fedishare/fedishare/internal/config"
@@ -279,4 +280,43 @@ func TestNewRequiresHome(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
+}
+
+func TestWatchIndexesNewFile(t *testing.T) {
+	cfg, home := ephemeral(t)
+	share := t.TempDir()
+	cfg.Username = "alice"
+	cfg.ShareDirectory = share
+	cfg.GatewayURL = ""
+	if err := os.WriteFile(filepath.Join(share, "a.txt"), []byte("a"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	n, err := New(Options{Home: home, Config: cfg, Log: silentLog()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	if err := n.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
+	defer n.Shutdown(ctx)
+
+	waitFiles := func(want int) {
+		t.Helper()
+		deadline := time.Now().Add(5 * time.Second)
+		for {
+			if n.Status().Snapshot().IndexedFiles == want {
+				return
+			}
+			if time.Now().After(deadline) {
+				t.Fatalf("indexed files = %d, want %d", n.Status().Snapshot().IndexedFiles, want)
+			}
+			time.Sleep(50 * time.Millisecond)
+		}
+	}
+	waitFiles(1)
+	if err := os.WriteFile(filepath.Join(share, "b.txt"), []byte("b"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	waitFiles(2)
 }

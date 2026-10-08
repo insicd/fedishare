@@ -26,6 +26,10 @@ import (
 
 const configKeyPaused = "sharing_paused"
 
+// indexRescanEvery is the safety-net full scan while the node is running.
+// Live folder events still update the index immediately via fsnotify.
+var indexRescanEvery = 15 * time.Minute
+
 // Options configure a desktop node.
 type Options struct {
 	Home   string
@@ -398,15 +402,58 @@ func (n *Node) runIndexLoop(ctx context.Context) {
 	if err := n.status.SetState(status.StateIndexing); err != nil {
 		n.log.Debug("index state", "err", err)
 	}
+	n.scanOnce(ctx)
+	go n.watchForever(ctx)
+	interval := indexRescanEvery
+	if interval <= 0 {
+		interval = 15 * time.Minute
+	}
+	tick := time.NewTicker(interval)
+	defer tick.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-tick.C:
+			n.scanOnce(ctx)
+		}
+	}
+}
+
+func (n *Node) scanOnce(ctx context.Context) {
+	if n.indexer == nil || ctx.Err() != nil {
+		return
+	}
 	if err := n.indexer.Scan(ctx); err != nil && ctx.Err() == nil {
-		n.log.Warn("initial file scan", "err", err)
+		n.log.Warn("file scan", "err", err)
 	}
 	n.indexer.PublishSummary(ctx)
 	n.mu.Lock()
 	_ = n.refreshLocked(false)
 	n.mu.Unlock()
-	if err := n.watch.Run(ctx); err != nil && ctx.Err() == nil {
-		n.log.Warn("directory watch stopped", "err", err)
+}
+
+func (n *Node) watchForever(ctx context.Context) {
+	delay := time.Second
+	for ctx.Err() == nil {
+		if n.watch == nil {
+			return
+		}
+		err := n.watch.Run(ctx)
+		if ctx.Err() != nil {
+			return
+		}
+		if err != nil {
+			n.log.Warn("directory watch stopped", "err", err)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(delay):
+		}
+		if delay < 30*time.Second {
+			delay *= 2
+		}
 	}
 }
 

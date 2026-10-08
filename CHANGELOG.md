@@ -21,6 +21,7 @@ All notable changes to FediShare are documented here.
 - Open the system folder picker (Browse…) when choosing a share directory, so the path does not have to be typed.
 - Add a desktop **FediShare network** page: list actors on the same gateway (`GET /.well-known/fedishare-network`) and look up another gateway URL or `@user@host`. There is no global Fediverse directory.
 - When a node is offline, browsers get a real HTML page (“this profile is not reachable”) instead of raw markup or a proxy-intercepted 503.
+- Keep the shared-folder index current while the desktop is running: live fsnotify updates, retry the watcher if it dies, and a full rescan every 15 minutes so missed events still publish.
 
 ## 0.5.0-dev — Phase 5
 
