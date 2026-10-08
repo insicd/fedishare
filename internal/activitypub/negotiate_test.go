@@ -43,7 +43,7 @@ func TestActorAndNoteHTML(t *testing.T) {
 		t.Fatalf("ctype=%s", rec.Header().Get("Content-Type"))
 	}
 	body := rec.Body.String()
-	for _, need := range []string{"Alice", "@alice@nodes.example.org", "Sharing files.", "hello.txt", "My Web", "https://nodes.example.org/users/alice", "Fedishare", "github.com/insicd/fedishare"} {
+	for _, need := range []string{"Alice", "@alice@nodes.example.org", "Sharing files.", "hello.txt", "data-share", "/users/alice/share", "My Web", "https://nodes.example.org/users/alice", "Fedishare", "github.com/insicd/fedishare"} {
 		if !strings.Contains(body, need) {
 			t.Fatalf("missing %q in %s", need, body)
 		}

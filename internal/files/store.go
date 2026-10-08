@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/fedishare/fedishare/internal/database"
@@ -194,23 +195,54 @@ func (s *Store) CountPublic(ctx context.Context) (int, error) {
 }
 
 func (s *Store) ListPublicPage(ctx context.Context, offset, limit int) ([]Record, error) {
+	recs, _, err := s.SearchPublic(ctx, "", offset, limit)
+	return recs, err
+}
+
+// SearchPublic lists public files whose name or relative path contains q.
+func (s *Store) SearchPublic(ctx context.Context, q string, offset, limit int) ([]Record, int, error) {
 	if limit <= 0 || limit > 80 {
-		limit = 20
+		limit = 25
 	}
 	if offset < 0 {
 		offset = 0
 	}
+	q = strings.TrimSpace(q)
+	if len(q) > 200 {
+		q = q[:200]
+	}
+	where := `available = 1 AND (visibility = ? OR visibility = '')`
+	args := []any{VisibilityPublic}
+	if q != "" {
+		pat := likeContains(q)
+		where += ` AND (filename LIKE ? ESCAPE '\' OR relative_path LIKE ? ESCAPE '\')`
+		args = append(args, pat, pat)
+	}
+	var total int
+	countArgs := append([]any{}, args...)
+	if err := s.db.SQL().QueryRowContext(ctx, `SELECT COUNT(1) FROM files WHERE `+where, countArgs...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	args = append(args, limit, offset)
 	rows, err := s.db.SQL().QueryContext(ctx, `
 		SELECT id, relative_path, filename, mime_type, size, hash_algorithm, hash_digest, modified_at, indexed_at, available, visibility
 		FROM files
-		WHERE available = 1 AND (visibility = ? OR visibility = '')
+		WHERE `+where+`
 		ORDER BY indexed_at DESC, id DESC
-		LIMIT ? OFFSET ?`, VisibilityPublic, limit, offset)
+		LIMIT ? OFFSET ?`, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
-	return scanRows(rows)
+	recs, err := scanRows(rows)
+	return recs, total, err
+}
+
+func likeContains(q string) string {
+	q = strings.ReplaceAll(q, `\`, `\\`)
+	q = strings.ReplaceAll(q, `%`, `\%`)
+	q = strings.ReplaceAll(q, `_`, `\_`)
+	return "%" + q + "%"
 }
 
 func (s *Store) Summary(ctx context.Context) (Summary, error) {

@@ -25,6 +25,7 @@ type Source interface {
 	PublicBase() string
 	AcctHost() string
 	ListPublicFiles(ctx context.Context, offset, limit int) ([]files.Record, int, error)
+	SearchPublicFiles(ctx context.Context, query string, offset, limit int) ([]files.Record, int, error)
 	GetPublicFile(ctx context.Context, id string) (files.Record, error)
 }
 

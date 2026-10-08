@@ -50,6 +50,10 @@ CGO_ENABLED=0 go build -o bin/fedishare-gateway ./cmd/fedishare-gateway
 ./bin/fedishare --version
 ./bin/fedishare --data-dir ./.fedishare-home --no-tray --no-open
 
+# to launch it in background without shell, on Mac
+nohup ./bin/fedishare >/dev/null 2>&1 &
+disown
+
 ./bin/fedishare-gateway --version
 ./bin/fedishare-gateway --listen 127.0.0.1:8080 --data-dir ./.fedishare-gateway --public-url http://127.0.0.1:8080
 ```

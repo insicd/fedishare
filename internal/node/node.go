@@ -198,18 +198,17 @@ func (n *Node) AcctHost() string {
 }
 
 func (n *Node) ListPublicFiles(ctx context.Context, offset, limit int) ([]files.Record, int, error) {
+	return n.SearchPublicFiles(ctx, "", offset, limit)
+}
+
+func (n *Node) SearchPublicFiles(ctx context.Context, query string, offset, limit int) ([]files.Record, int, error) {
 	n.mu.Lock()
 	store := n.store
 	n.mu.Unlock()
 	if store == nil {
 		return nil, 0, nil
 	}
-	total, err := store.CountPublic(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-	recs, err := store.ListPublicPage(ctx, offset, limit)
-	return recs, total, err
+	return store.SearchPublic(ctx, query, offset, limit)
 }
 
 func (n *Node) GetPublicFile(ctx context.Context, id string) (files.Record, error) {

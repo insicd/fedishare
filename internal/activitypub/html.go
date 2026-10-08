@@ -12,7 +12,7 @@ import (
 	"github.com/fedishare/fedishare/internal/version"
 )
 
-const htmlFileLimit = 50
+const htmlPageSize = 25
 
 var publicPages = template.Must(template.ParseFS(web.Templates, "templates/*.html"))
 
@@ -27,8 +27,10 @@ type ProfilePage struct {
 	BrandName   string
 	BrandURL    string
 	JSONURL     string
+	ShareAPI    string
 	Files       []FileLink
 	TotalFiles  int
+	PageSize    int
 	Offline     bool
 	Unreachable bool
 	Version     string
@@ -37,6 +39,7 @@ type ProfilePage struct {
 // FileLink is one public file on the HTML profile or note page.
 type FileLink struct {
 	Name        string
+	Path        string
 	MIME        string
 	Size        string
 	NoteURL     string
@@ -76,9 +79,11 @@ func (h *Handler) writeProfile(w http.ResponseWriter, r *http.Request) {
 		BrandName:   activitystreams.BrandFieldName,
 		BrandURL:    activitystreams.BrandFieldURL,
 		JSONURL:     paths.Actor(),
+		ShareAPI:    "/users/" + h.src.Username() + "/share",
+		PageSize:    htmlPageSize,
 		Version:     version.Version,
 	}
-	recs, total, err := h.src.ListPublicFiles(r.Context(), 0, htmlFileLimit)
+	recs, total, err := h.src.SearchPublicFiles(r.Context(), "", 0, htmlPageSize)
 	if err == nil {
 		page.TotalFiles = total
 		page.Files = fileLinks(paths, recs)
@@ -118,6 +123,7 @@ func fileLinks(paths activitystreams.Paths, recs []files.Record) []FileLink {
 		}
 		out = append(out, FileLink{
 			Name:        name,
+			Path:        rec.RelativePath,
 			MIME:        displayMIME(rec.MIMEType),
 			Size:        activitystreams.FormatSize(rec.Size),
 			NoteURL:     paths.Note(rec.ID),
@@ -235,7 +241,7 @@ func writePublicHTML(w http.ResponseWriter, name string, data any) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Vary", "Accept")
-	w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; form-action 'none'; frame-ancestors 'none'")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; form-action 'none'; frame-ancestors 'none'")
 	if jsonURL != "" {
 		w.Header().Set("Link", `<`+jsonURL+`>; rel="alternate"; type="application/activity+json"`)
 	}

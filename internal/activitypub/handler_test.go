@@ -33,14 +33,25 @@ func (f fakeSource) PublicKeyPEM() (string, error) {
 func (f fakeSource) PublicBase() string { return f.base }
 func (f fakeSource) AcctHost() string   { return f.host }
 func (f fakeSource) ListPublicFiles(_ context.Context, offset, limit int) ([]files.Record, int, error) {
-	if offset > len(f.files) {
-		return nil, len(f.files), nil
+	return f.SearchPublicFiles(context.Background(), "", offset, limit)
+}
+func (f fakeSource) SearchPublicFiles(_ context.Context, query string, offset, limit int) ([]files.Record, int, error) {
+	query = strings.ToLower(strings.TrimSpace(query))
+	var matched []files.Record
+	for _, rec := range f.files {
+		if query != "" && !strings.Contains(strings.ToLower(rec.Filename), query) && !strings.Contains(strings.ToLower(rec.RelativePath), query) {
+			continue
+		}
+		matched = append(matched, rec)
+	}
+	if offset > len(matched) {
+		return nil, len(matched), nil
 	}
 	end := offset + limit
-	if end > len(f.files) {
-		end = len(f.files)
+	if end > len(matched) {
+		end = len(matched)
 	}
-	return f.files[offset:end], len(f.files), nil
+	return matched[offset:end], len(matched), nil
 }
 func (f fakeSource) GetPublicFile(_ context.Context, id string) (files.Record, error) {
 	for _, rec := range f.files {
@@ -61,13 +72,14 @@ func testSrc() fakeSource {
 		base:       "https://nodes.example.org",
 		host:       "nodes.example.org",
 		files: []files.Record{{
-			ID:        "aabbccddeeff00112233445566778899",
-			Filename:  "hello.txt",
-			MIMEType:  "text/plain",
-			Size:      5,
-			Available: true,
-			IndexedAt: time.Date(2026, 9, 23, 12, 0, 0, 0, time.UTC),
-			Hash:      files.ContentID{Algorithm: files.AlgoSHA256, Digest: "abc"},
+			ID:           "aabbccddeeff00112233445566778899",
+			RelativePath: "hello.txt",
+			Filename:     "hello.txt",
+			MIMEType:     "text/plain",
+			Size:         5,
+			Available:    true,
+			IndexedAt:    time.Date(2026, 9, 23, 12, 0, 0, 0, time.UTC),
+			Hash:         files.ContentID{Algorithm: files.AlgoSHA256, Digest: "abc"},
 		}},
 	}
 }
@@ -215,6 +227,36 @@ func TestOutboxPagesAndFileObject(t *testing.T) {
 	h.ServeHTTP(emptyRec, empty)
 	if emptyRec.Code != 200 || !strings.Contains(emptyRec.Body.String(), `"totalItems":0`) {
 		t.Fatalf("followers=%s", emptyRec.Body.String())
+	}
+}
+
+func TestShareListing(t *testing.T) {
+	src := testSrc()
+	src.files = append(src.files, files.Record{
+		ID:           "bbccddeeff00112233445566778899aa",
+		RelativePath: "docs/manual.pdf",
+		Filename:     "manual.pdf",
+		MIMEType:     "application/pdf",
+		Size:         100,
+		Available:    true,
+	})
+	h := mount(src)
+	req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:17890/users/alice/share?q=manual&page=1", nil)
+	req.Host = "127.0.0.1:17890"
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Header().Get("Content-Type"), "application/json") {
+		t.Fatalf("ctype=%s", rec.Header().Get("Content-Type"))
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "manual.pdf") || !strings.Contains(body, "docs/manual.pdf") {
+		t.Fatalf("share=%s", body)
+	}
+	if strings.Contains(body, "hello.txt") {
+		t.Fatalf("search leaked other files: %s", body)
 	}
 }
 

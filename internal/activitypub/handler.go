@@ -32,6 +32,7 @@ func Mount(mux *http.ServeMux, src Source) {
 	mux.HandleFunc("GET /users/{username}/following", h.Following)
 	mux.HandleFunc("GET /users/{username}/inbox", h.Inbox)
 	mux.HandleFunc("POST /users/{username}/inbox", h.InboxPOST)
+	mux.HandleFunc("GET /users/{username}/share", h.Share)
 	mux.HandleFunc("GET /users/{username}/files/{id}", h.FileObject)
 	mux.HandleFunc("GET /users/{username}/notes/{id}", h.Note)
 	mux.HandleFunc("GET /users/{username}/activities/{id}", h.Activity)
@@ -250,6 +251,72 @@ func (h *Handler) emptyCollection(w http.ResponseWriter, r *http.Request, idFn f
 		return
 	}
 	writeActivity(w, http.StatusOK, activitystreams.Collection(idFn(), 0, pageSize))
+}
+
+func (h *Handler) Share(w http.ResponseWriter, r *http.Request) {
+	if !matchUser(h.src, r.PathValue("username")) {
+		http.NotFound(w, r)
+		return
+	}
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	page := 1
+	if raw := strings.TrimSpace(r.URL.Query().Get("page")); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 1 {
+			http.Error(w, "invalid page", http.StatusBadRequest)
+			return
+		}
+		page = n
+	}
+	limit := 25
+	if raw := strings.TrimSpace(r.URL.Query().Get("limit")); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 1 {
+			http.Error(w, "invalid limit", http.StatusBadRequest)
+			return
+		}
+		limit = n
+	}
+	if limit > 50 {
+		limit = 50
+	}
+	offset := (page - 1) * limit
+	recs, total, err := h.src.SearchPublicFiles(r.Context(), q, offset, limit)
+	if err != nil {
+		http.Error(w, "could not list shared files", http.StatusInternalServerError)
+		return
+	}
+	paths := h.paths()
+	out := make([]map[string]any, 0, len(recs))
+	for _, rec := range recs {
+		name := rec.Filename
+		if name == "" {
+			name = rec.ID
+		}
+		out = append(out, map[string]any{
+			"name":         name,
+			"path":         rec.RelativePath,
+			"mime":         displayMIME(rec.MIMEType),
+			"size":         activitystreams.FormatSize(rec.Size),
+			"size_bytes":   rec.Size,
+			"note_url":     paths.Note(rec.ID),
+			"download_url": paths.Download(rec.ID),
+		})
+	}
+	pages := 0
+	if total > 0 {
+		pages = (total + limit - 1) / limit
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"query": q,
+		"page":  page,
+		"limit": limit,
+		"pages": pages,
+		"total": total,
+		"files": out,
+	})
 }
 
 func (h *Handler) FileObject(w http.ResponseWriter, r *http.Request) {

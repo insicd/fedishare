@@ -38,30 +38,51 @@
       <p class="bio">This node is offline. Shared files are listed only while the desktop app is running.</p>
     </section>
     {{else}}
-    <section class="card">
+    <section class="card files-card" data-share="{{.ShareAPI}}" data-page-size="{{.PageSize}}">
       <h2>Shared files</h2>
-      {{if .Files}}
-      <ul class="files">
-        {{range .Files}}
-        <li>
-          <div>
-            <a class="name" href="{{.NoteURL}}">{{.Name}}</a>
-            <p class="meta">{{.MIME}} · {{.Size}}</p>
-          </div>
-          <a class="btn" href="{{.DownloadURL}}">Download</a>
-        </li>
-        {{end}}
-      </ul>
-      {{if gt .TotalFiles (len .Files)}}
-      <p class="hint">Showing {{len .Files}} of {{.TotalFiles}} files.</p>
-      {{end}}
-      {{else}}
-      <p class="hint">No public files yet.</p>
-      {{end}}
+      <label class="share-search">Search
+        <input type="search" data-share-q placeholder="Name or folder…" autocomplete="off">
+      </label>
+      <div class="table-wrap">
+        <table class="files-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Path</th>
+              <th>Type</th>
+              <th>Size</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody data-share-body>
+            {{range .Files}}
+            <tr>
+              <td><a class="name" href="{{.NoteURL}}">{{.Name}}</a></td>
+              <td class="path">{{.Path}}</td>
+              <td>{{.MIME}}</td>
+              <td>{{.Size}}</td>
+              <td><a class="btn" href="{{.DownloadURL}}">Download</a></td>
+            </tr>
+            {{else}}
+            <tr><td colspan="5" class="hint">No public files yet.</td></tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+      <div class="share-pager">
+        <p class="hint" data-share-meta>{{if .TotalFiles}}Showing {{len .Files}} of {{.TotalFiles}} files.{{end}}</p>
+        <div class="share-buttons">
+          <button type="button" class="btn secondary" data-share-prev disabled>Previous</button>
+          <button type="button" class="btn secondary" data-share-next {{if le .TotalFiles .PageSize}}disabled{{end}}>Next</button>
+        </div>
+      </div>
     </section>
     {{end}}
     {{end}}
     <footer>FediShare {{.Version}} — files stay on the owner’s computer.</footer>
   </main>
+  {{if not .Unreachable}}{{if not .Offline}}
+  {{template "share-script" .}}
+  {{end}}{{end}}
 </body>
 </html>

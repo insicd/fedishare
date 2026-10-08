@@ -73,6 +73,7 @@ func mountPublicRouter(mux *http.ServeMux, router PublicRouter) {
 	mux.HandleFunc("GET /users/{username}/following", fn)
 	mux.HandleFunc("GET /users/{username}/inbox", fn)
 	mux.HandleFunc("POST /users/{username}/inbox", fn)
+	mux.HandleFunc("GET /users/{username}/share", fn)
 	mux.HandleFunc("GET /users/{username}/files/{id}", fn)
 	mux.HandleFunc("GET /users/{username}/notes/{id}", fn)
 	mux.HandleFunc("GET /users/{username}/activities/{id}", fn)

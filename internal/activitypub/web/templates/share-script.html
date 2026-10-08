@@ -1,0 +1,73 @@
+{{define "share-script"}}
+<script>
+(function () {
+  var root = document.querySelector("[data-share]");
+  if (!root) return;
+  var api = root.getAttribute("data-share");
+  var qEl = root.querySelector("[data-share-q]");
+  var body = root.querySelector("[data-share-body]");
+  var meta = root.querySelector("[data-share-meta]");
+  var prev = root.querySelector("[data-share-prev]");
+  var next = root.querySelector("[data-share-next]");
+  var page = 1;
+  var q = "";
+  var pages = 1;
+  var timer = null;
+
+  function esc(s) {
+    return String(s || "").replace(/[&<>"']/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
+    });
+  }
+
+  function load() {
+    var url = api + "?page=" + page + "&limit=25";
+    if (q) url += "&q=" + encodeURIComponent(q);
+    fetch(url, { headers: { Accept: "application/json" } })
+      .then(function (res) {
+        if (!res.ok) throw new Error("Could not load files.");
+        return res.json();
+      })
+      .then(function (data) {
+        var files = data.files || [];
+        pages = data.pages || 1;
+        page = data.page || 1;
+        if (!files.length) {
+          body.innerHTML = '<tr><td colspan="5" class="hint">' + (q ? "No files match that search." : "No public files yet.") + "</td></tr>";
+        } else {
+          body.innerHTML = files.map(function (f) {
+            return "<tr><td><a class=\"name\" href=\"" + esc(f.note_url) + "\">" + esc(f.name) + "</a></td>" +
+              "<td class=\"path\">" + esc(f.path) + "</td>" +
+              "<td>" + esc(f.mime) + "</td>" +
+              "<td>" + esc(f.size) + "</td>" +
+              "<td><a class=\"btn\" href=\"" + esc(f.download_url) + "\">Download</a></td></tr>";
+          }).join("");
+        }
+        var total = data.total || 0;
+        var start = total === 0 ? 0 : (page - 1) * (data.limit || 25) + 1;
+        var end = Math.min(total, start + files.length - 1);
+        meta.textContent = total ? ("Showing " + start + "–" + end + " of " + total + " files.") : "No public files yet.";
+        prev.disabled = page <= 1;
+        next.disabled = page >= pages;
+      })
+      .catch(function (err) {
+        body.innerHTML = '<tr><td colspan="5" class="hint">' + esc(err.message) + "</td></tr>";
+      });
+  }
+
+  if (qEl) {
+    qEl.addEventListener("input", function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        page = 1;
+        q = (qEl.value || "").trim();
+        load();
+      }, 280);
+    });
+  }
+  if (prev) prev.addEventListener("click", function () { if (page > 1) { page--; load(); } });
+  if (next) next.addEventListener("click", function () { page++; load(); });
+  load();
+})();
+</script>
+{{end}}

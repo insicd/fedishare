@@ -59,6 +59,7 @@ The gateway reverse-proxies only:
 GET  /.well-known/webfinger
 GET  /.well-known/fedishare-network
 GET  /users/{username}
+GET  /users/{username}/share
 GET  /users/{username}/outbox
 GET  /users/{username}/followers
 GET  /users/{username}/following
